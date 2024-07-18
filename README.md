@@ -6,14 +6,14 @@ To set up your machine:
 
 To run the demo application:
 - Open the Unreal Engine project `L3_test.uproject` and run the application.
-- Launch the python script `L3_CA.py` to connect to the UE application and stream data points to animate character behviour.
+- Launch the python script `L3_client.py` to connect to the UE application and stream data points to animate character behviour.
 
 ## Code Structure
 To debug character animation navigate to `L3_test\Content\Characters\Mannequins\Animations` using Content Drawer and open `L3_synch`.
 This blueprint connects the character behaviour with Python commands using TCP socket connection, the basic workflow is as follows:
 - UE blueprint creates an instance of the socket connection and waits for connection in the event graph.
-- By launching `L3_CA.py` a connection is established and the character behaviour is displayed.
-- `L3_CA.py` sends data points in the 3D space used as target values for the left hand IK control.
+- By launching `L3_client.py` a connection is established and the character behaviour is displayed.
+- `L3_client.py` sends data points in the 3D space used as target values for the left hand IK control.
 - Such data is stored in a local varible and, it is continously checked by the animgraph to set target location for the left hand IK rig which updates the full body posture.
 
 Useful information:
