@@ -6,7 +6,7 @@ To set up your machine:
 
 To run the demo application:
 - Open the Unreal Engine project 'L3_test.uproject' and run the application.
-- Launch the python script 'L3_CA.py' to connect to the UE application and stream data point to animate end-effector.
+- Launch the python script 'L3_CA.py' to connect to the UE application and stream data points to animate character behviour.
 
 ## Code Structure
 To debug character animation navigate to 'L3_test\Content\Characters\Mannequins\Animations' using Content Drawer and open 'L3_synch'.
