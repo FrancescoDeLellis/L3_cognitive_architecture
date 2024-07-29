@@ -109,7 +109,7 @@ if __name__ == "__main__":
         print('Control + C pressed, closing socket...')
         connection.close()
         sys.exit(0)
-    signal.signal(signal.SIGINT, agent.signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     print(f'Connection from {client_address}')
 
