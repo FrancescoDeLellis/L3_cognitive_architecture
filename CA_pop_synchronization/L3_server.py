@@ -8,7 +8,7 @@ from icecream import ic
 from L3_engine import L3Agent, Phase_estimator_pca_online
 
 ic.configureOutput(prefix='DEBUG | ')
-# ic.disable()                              # Uncomment to get useful debugging messages
+# ic.disable()                              # Uncomment to stop debugging messages
 
 class L3_Wrapper():
 
