@@ -79,7 +79,7 @@ class L3_Wrapper():
 
 
 if __name__ == "__main__":
-    agent = L3_Wrapper('model')
+    agent = L3_Wrapper('CA_pop_synchronization\model')
 
     # Set the server address and port (must match with socket in UE)
     SERVER_ADDRESS = 'localhost'

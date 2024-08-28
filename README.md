@@ -38,7 +38,7 @@ However, the L3 CA module simulates the other participants using kuramoto oscill
 In future iterations, as we populate the space with other participants, the L3 blueprint will send the data of the other participants instead of copies of the L3 end-effector positions, the python modules will not simulate any kuramoto and will make the DQN tranined L3 CA interact with the other avatars in the space.
 
 ### Instructions to plug avatars in the UE space
-If you want to connect the L3 DQN agent you can go to the `L3_server.py` in method `update_position` of `update_position` to follow commented instructions.
+If you want to connect the L3 DQN agent you can go to the `L3_server.py` in method `update_position` of `L3_Wrapper` to follow commented instructions.
 Note that at this stage the L3 CA module expects position from 2 more avatars other than itself, scalability of this part is under works.
 
 Useful information
