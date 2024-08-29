@@ -108,9 +108,6 @@ if __name__ == "__main__":
                 agent.reset_CA()
                 print('Cognitive Architecture reset completed')
                 connection, client_address = agent.start_connection(SERVER_ADDRESS, SERVER_PORT)
-                
-                # Register the signal handler for SIGINT (Control + C)
-                # signal.signal(signal.SIGINT, signal_handler)
     
                 time = 0
 

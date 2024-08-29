@@ -22,6 +22,7 @@ class L3_Wrapper():
         self.z_amp_ratio = 0.1    
         self.intial_position = 0
         self.intial_phase = 0
+        self.parts = parts
 
         self.l3_phase = []
         self.l3_agent = L3Agent(parts, omega_parts, c_strenght, model_path)
@@ -31,10 +32,17 @@ class L3_Wrapper():
 
         # self.parts_phases = []
         self.estimators_live = []
-        for _ in range(parts):
+        for _ in range(self.parts):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(parts)]
+        self.kuramoto_phases = [np.zeros(self.parts)]
+
+    def reset_CA(self):
+        self.estimators_live = []
+        for _ in range(self.parts):
+            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
+
+        self.kuramoto_phases = [np.zeros(self.parts)]
 
     # This function extracts the 3D data position coming from UE
     def parse_TCP_string(self, string):
@@ -77,6 +85,28 @@ class L3_Wrapper():
         message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(agent.z))    # Format data as UE Vector
         return message
 
+    @staticmethod
+    def start_connection(address, port):
+        # Create a TCP socket
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        try:
+            # Bind the socket to the server address and port
+            server_socket.bind((address, port))
+        except socket.error as e:
+            print("Connection error: %s" % e)
+
+        # Listen for incoming connections
+        server_socket.listen(1)         # Limit number of connections to L3 socket
+        print(f'Server listening on {address}:{port}')
+
+        # Wait for a client connection
+        print('Waiting for a connection...')
+        connection, client_address = server_socket.accept()
+        print(f'Connection from {client_address}')
+
+        return connection, client_address
+
 
 if __name__ == "__main__":
     agent = L3_Wrapper('CA_pop_synchronization\model')
@@ -85,33 +115,17 @@ if __name__ == "__main__":
     SERVER_ADDRESS = 'localhost'
     SERVER_PORT = 12345
 
-    # Create a TCP socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    connection, client_address = agent.start_connection(SERVER_ADDRESS, SERVER_PORT)
 
-    try:
-        # Bind the socket to the server address and port
-        server_socket.bind((SERVER_ADDRESS, SERVER_PORT))
-    except socket.error as e:
-        print("Connection error: %s" % e)
-
-    # Listen for incoming connections
-    server_socket.listen(1)         # Limit number of connections to L3 socket
-    print(f'Server listening on {SERVER_ADDRESS}:{SERVER_PORT}')
-
-    # Wait for a client connection
-    print('Waiting for a connection...')
-    connection, client_address = server_socket.accept()
-
-    # Register the signal handler for SIGINT (Control + C)
     def signal_handler(sig, frame):
         message = 'quit'
         connection.send(message.encode('utf-8'))
         print('Control + C pressed, closing socket...')
         connection.close()
         sys.exit(0)
-    signal.signal(signal.SIGINT, signal_handler)
 
-    print(f'Connection from {client_address}')
+    # Register the signal handler for SIGINT (Control + C)
+    signal.signal(signal.SIGINT, signal_handler)
 
     time = 0
 
@@ -119,22 +133,34 @@ if __name__ == "__main__":
     while True:    
         try:
             ic(f'waiting for data')
-            ready_to_read, _, _ = select.select([connection], [], [])
+            ready_to_read, ready_to_write, exception = select.select([connection], [], [], 5)
             if ready_to_read: 
                 data = connection.recv(1024).decode()
-                _, position, delta_t = agent.parse_TCP_string(data)
-                position = np.tile(position, (3, 1)).T
                 ic(f'Received data: {data}')
 
-            if time == 0: agent.intial_position = position[:, 0]
-            
-            time += delta_t
-            ic(position, delta_t)
-            message = agent.update_position(position, delta_t, time)
+            if data == '' or not(ready_to_read or ready_to_write or exception): 
+                print('Connection with client terminated')
+                connection.close()
+                
+                agent.reset_CA()
+                print('Cognitive Architecture reset completed')
+                connection, client_address = agent.start_connection(SERVER_ADDRESS, SERVER_PORT)
+    
+                time = 0
 
-            _, ready_to_write, _ = select.select([], [connection], [])
-            if ready_to_write: connection.send(message.encode('utf-8'))
-            ic(f'Message sent: {message}')
+            else:
+                _, position, delta_t = agent.parse_TCP_string(data)
+                position = np.tile(position, (3, 1)).T
+
+                if time == 0: agent.intial_position = position[:, 0]
+                
+                time += delta_t
+                ic(position, delta_t)
+                message = agent.update_position(position, delta_t, time)
+
+                _, ready_to_write, _ = select.select([], [connection], [])
+                if ready_to_write: connection.send(message.encode('utf-8'))
+                ic(f'Message sent: {message}')
         except KeyboardInterrupt:
             # Handle the Control + C key press gracefully
             signal_handler(None, None)    
