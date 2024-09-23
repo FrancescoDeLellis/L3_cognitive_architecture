@@ -77,7 +77,7 @@ class L3_Wrapper():
 
         self.l3_agent.dt = delta_t
         theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
-        # self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))                  # comment this and next line and uncomment upper line if L3 is connected with VR agents 
+        # self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))          # comment this and next line and uncomment upper line if L3 is connected with VR agents 
         # theta_next = self.kuramoto_phases[-1][self.l3_agent.virtual_agent]
 
         ic(theta_next)
