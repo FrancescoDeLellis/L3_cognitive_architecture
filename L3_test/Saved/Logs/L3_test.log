@@ -26451,3 +26451,4 @@ LogConfig: Set CVar [[r.Shadow.DetectVertexShaderLayerAtRuntime:1]]
 [2024.09.23-15.55.32:804][747]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
 [2024.09.23-15.55.32:867][747]LogWorld: UWorld::CleanupWorld for World_19, bSessionEnded=true, bCleanupResources=true
 [2024.09.23-15.55.32:867][747]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2024.09.23-16.03.08:688][365]LogDerivedDataCache: C:/Users/franc/AppData/Local/UnrealEngine/Common/DerivedDataCache: Maintenance finished in +00:00:00.034 and deleted 0 files with total size 0 MiB and 0 empty folders. Scanned 357 files in 652 folders with total size 3 MiB.
