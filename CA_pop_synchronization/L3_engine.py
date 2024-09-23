@@ -36,9 +36,9 @@ class L3Agent:
         return diff
 
     def wrapping(self, theta):
-        if theta > np.pi:
+        if theta > 2 * np.pi:
             theta -= 2 * np.pi
-        elif theta < -np.pi:
+        elif theta < 0:
             theta += 2 * np.pi
 
         return theta

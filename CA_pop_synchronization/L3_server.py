@@ -6,15 +6,16 @@ import sys
 import signal
 from icecream import ic
 from L3_engine import L3Agent, Phase_estimator_pca_online
+import sys
 
 ic.configureOutput(prefix='DEBUG | ')
 # ic.disable()                              # Uncomment to stop debugging messages
 
 class L3_Wrapper():
 
-    def __init__(self, model_path, ID = 0, amp = 10, omega = 2, parts = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 1.25):
+    def __init__(self, model_path, ID = 0, amplitude = 10, omega = 2, partecipants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 1.25):
         self.ID = ID                # Python CA instance ID
-        self.amplitude = amp        # Movement amplitude
+        self.amplitude = amplitude  # Movement amplitude
         self.omega = omega          # Movement frequency                
         self.x = 0 
         self.y = 0  
@@ -22,34 +23,35 @@ class L3_Wrapper():
         self.z_amp_ratio = 0.1    
         self.intial_position = 0
         self.intial_phase = 0
-        self.parts = parts
+        self.partecipants = partecipants
 
         self.l3_phase = []
-        self.l3_agent = L3Agent(parts, omega_parts, c_strenght, model_path)
+        self.l3_agent = L3Agent(partecipants, omega_parts, c_strenght, model_path)
 
         self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operated
         self.interval_between_pca = 1     # time interval [seconds] separating consecutive computations of the PCA
 
         # self.parts_phases = []
         self.estimators_live = []
-        for _ in range(self.parts):
+        for _ in range(self.partecipants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(self.parts)]
+        self.kuramoto_phases = [np.zeros(self.partecipants)]
 
     def reset_CA(self):
+        # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
-        for _ in range(self.parts):
+        for _ in range(self.partecipants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(self.parts)]
+        self.kuramoto_phases = [np.zeros(self.partecipants)]
 
     # This function extracts the 3D data position coming from UE
     def parse_TCP_string(self, string):
         ic(string)
         numbers = np.array([float(num) for num in re.findall(r'-?\d+\.?\d*', string)])
         flag = len(numbers) == 3*self.l3_agent.n_nodes + 1
-        return flag, numbers[0:3], numbers[-1]
+        return flag, numbers[0:-1], numbers[-1]
     
     def set_intial_position(self, position):
         self.intial_position = position
@@ -61,6 +63,7 @@ class L3_Wrapper():
     def update_position(self, positions, delta_t, time):
         # positions contains the neighbors 3D end effectors
         theta = np.arctan2(self.z, self.y)
+        theta = np.mod(theta, 2*np.pi)  # wrap to [0, 2pi)
         ic(theta)
         self.l3_phase.append(theta)
 
@@ -68,14 +71,14 @@ class L3_Wrapper():
 
         phases = [theta - self.intial_phase]
         for i in range(self.l3_agent.n_nodes - 1):
-            phases.append(agent.estimators_live[i].estimate_phase(positions[:, i+1], time) - np.pi) 
+            phases.append(agent.estimators_live[i].estimate_phase(positions[:, i+1], time))           # CA assumes that first position element is the L3 itself
 
         ic(phases)
 
         self.l3_agent.dt = delta_t
-        # theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
-        self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))                  # comment this and next line and uncomment upper line if L3 is connected with VR agents 
-        theta_next = self.kuramoto_phases[-1][self.l3_agent.virtual_agent]
+        theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
+        # self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))                  # comment this and next line and uncomment upper line if L3 is connected with VR agents 
+        # theta_next = self.kuramoto_phases[-1][self.l3_agent.virtual_agent]
 
         ic(theta_next)
 
@@ -109,7 +112,29 @@ class L3_Wrapper():
 
 
 if __name__ == "__main__":
-    agent = L3_Wrapper('CA_pop_synchronization\model')
+    parameters = sys.argv[1:]
+
+    # Validate inputs to ensure they are numbers
+    validated_inputs = []
+    error = False
+    for param in parameters:
+        try:
+            validated_inputs.append(int(param))  # try converting to float
+        except ValueError:
+            print(f'Invalid input: {param} is not a number, please insert the number of partecipants connected to the L3 CA.')
+            error = True
+            sys.exit(1)
+
+    # Implement additional error handling
+    if len(validated_inputs) == 0 or validated_inputs[0] <= 0:
+        print('Error: Input is not valid, please insert the number of partecipants connected to the L3 CA.')
+        sys.exit(1)
+    elif not error:
+        n_partecipants = validated_inputs[0] + 1            # participant number is inteded as the number that the L3 is connected to
+
+    ic(n_partecipants)
+
+    agent = L3_Wrapper('CA_pop_synchronization\model', partecipants = n_partecipants)
 
     # Set the server address and port (must match with socket in UE)
     SERVER_ADDRESS = 'localhost'
@@ -150,7 +175,7 @@ if __name__ == "__main__":
 
             else:
                 _, position, delta_t = agent.parse_TCP_string(data)
-                position = np.tile(position, (3, 1)).T
+                position = np.reshape(position, (agent.partecipants, 3)).T
 
                 if time == 0: agent.intial_position = position[:, 0]
                 
@@ -161,6 +186,7 @@ if __name__ == "__main__":
                 _, ready_to_write, _ = select.select([], [connection], [])
                 if ready_to_write: connection.send(message.encode('utf-8'))
                 ic(f'Message sent: {message}')
+
         except KeyboardInterrupt:
             # Handle the Control + C key press gracefully
             signal_handler(None, None)    
