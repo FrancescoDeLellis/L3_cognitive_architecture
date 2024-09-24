@@ -36,9 +36,9 @@ class L3Agent:
         return diff
 
     def wrapping(self, theta):
-        if theta > 2 * np.pi:
+        if theta > np.pi:
             theta -= 2 * np.pi
-        elif theta < 0:
+        elif theta < -np.pi:
             theta += 2 * np.pi
 
         return theta
@@ -242,4 +242,4 @@ class Phase_estimator_pca_online:
 
         self.phase = math.atan2(-velocity_normalized, position_normalized)
         
-        self.phase = np.mod(self.phase, 2*np.pi)  # wrap to [0, 2pi)
+        # self.phase = np.mod(self.phase, 2*np.pi)  # wrap to [0, 2pi)

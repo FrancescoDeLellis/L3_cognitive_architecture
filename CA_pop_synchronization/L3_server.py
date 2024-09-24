@@ -63,7 +63,7 @@ class L3_Wrapper():
     def update_position(self, positions, delta_t, time):
         # positions contains the neighbors 3D end effectors
         theta = np.arctan2(self.z, self.y)
-        theta = np.mod(theta, 2*np.pi)  # wrap to [0, 2pi)
+        # theta = np.mod(theta, 2*np.pi)  # wrap to [0, 2pi)
         ic(theta)
         self.l3_phase.append(theta)
 
