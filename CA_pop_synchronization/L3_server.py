@@ -52,7 +52,8 @@ class L3_Wrapper():
         self.kuramoto_phases = [np.zeros(self.participants)]
 
         self.phases_history = [np.zeros(self.participants)]
-        self.time_history = []
+        self.time_history = [0]
+        self.positions_history = []
 
     # This function extracts the 3D data position coming from UE
     def parse_TCP_string(self, string):
