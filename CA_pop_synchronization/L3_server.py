@@ -24,7 +24,7 @@ class L3_Wrapper():
         self.l3_phase = []
         self.l3_agent = L3Agent(participants, omega_parts, c_strenght, model_path)
 
-        self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operated
+        self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operatedf
         self.interval_between_pca = 1     # time interval [seconds] separating consecutive computations of the PCA
 
         self.estimators_live = []
@@ -35,19 +35,21 @@ class L3_Wrapper():
 
         self.time_history = [0]
         self.phases_history = [np.zeros(self.participants)]
+        self.positions_history = []
         self.save_path = save_path
         self.create_folder_if_not_exists(save_path)
 
     def reset_CA(self):
+        # STORE DATA
+        self.save_data()
+        self.plot_phases(np.stack(self.phases_history))
+
         # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
         for _ in range(self.participants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
         self.kuramoto_phases = [np.zeros(self.participants)]
-
-        self.plot_phases(np.stack(self.phases_history))
-        self.save_data()
 
         self.phases_history = [np.zeros(self.participants)]
         self.time_history = []
@@ -60,14 +62,14 @@ class L3_Wrapper():
         return flag, numbers[0:-1], numbers[-1]
     
     def set_intial_position(self, position):
-        self.intial_position = position
-        self.y = -self.amplitude
-        self.z = 0
+        self.intial_position = position[:, agent.l3_agent.virtual_agent]
         self.intial_phase = 0
+        self.positions_history.append(position.T)
 
     # Calculates the next position and formats the message to be sent to UE for animation
     def update_position(self, positions, delta_t, time):
         # positions contains the neighbors 3D end effectors
+        self.positions_history.append(positions.T)
         theta = np.arctan2(self.z, self.y)
         # theta = np.mod(theta, 2*np.pi)  # wrap to [0, 2pi)
         ic(theta)
@@ -99,7 +101,7 @@ class L3_Wrapper():
     
     def plot_phases(self, phases):
         # Plotting
-        plt.figure(figsize=(10, 6))
+        plt.figure()
         for i in range(self.participants):
             if i == self.l3_agent.virtual_agent: plt.plot(self.time_history, phases[:, i], color='red', label=f'L3 {i+1}')
             else: plt.plot(self.time_history, phases[:, i], color='blue', label=f'VH {i+1}')
@@ -115,6 +117,7 @@ class L3_Wrapper():
 
     def save_data(self):
         np.save(f'{self.save_path}/phases_history.npy', np.stack(self.phases_history))
+        np.save(f'{self.save_path}/postions_history.npy', np.array(self.positions_history))
         np.save(f'{self.save_path}/time_history.npy', np.stack(self.time_history))
 
     @staticmethod
@@ -149,7 +152,7 @@ class L3_Wrapper():
 
 
 if __name__ == "__main__":
-    
+
     parameters = sys.argv[1:]
 
     # Validate inputs to ensure they are numbers
@@ -215,7 +218,7 @@ if __name__ == "__main__":
                 _, position, delta_t = agent.parse_TCP_string(data)
                 position = np.reshape(position, (agent.participants, 3)).T
 
-                if time == 0: agent.intial_position = position[:, 0]
+                if time == 0: agent.set_intial_position(position)
                 
                 time += delta_t
                 ic(position, delta_t)
