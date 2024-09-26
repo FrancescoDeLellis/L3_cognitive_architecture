@@ -1,19 +1,15 @@
-import socket
-import select
-import re
+import socket, select, re, sys, signal, os
+import matplotlib.pyplot as plt
 import numpy as np
-import sys
-import signal
 from icecream import ic
 from L3_engine import L3Agent, Phase_estimator_pca_online
-import sys
 
 ic.configureOutput(prefix='DEBUG | ')
 # ic.disable()                              # Uncomment to stop debugging messages
 
 class L3_Wrapper():
 
-    def __init__(self, model_path, ID = 0, amplitude = 10, omega = 2, partecipants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 1.25):
+    def __init__(self, model_path, save_path, ID = 0, amplitude = 10, omega = 2, participants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 0.25):
         self.ID = ID                # Python CA instance ID
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega          # Movement frequency                
@@ -23,28 +19,38 @@ class L3_Wrapper():
         self.z_amp_ratio = 0.1    
         self.intial_position = 0
         self.intial_phase = 0
-        self.partecipants = partecipants
+        self.participants = participants
 
         self.l3_phase = []
-        self.l3_agent = L3Agent(partecipants, omega_parts, c_strenght, model_path)
+        self.l3_agent = L3Agent(participants, omega_parts, c_strenght, model_path)
 
         self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operated
         self.interval_between_pca = 1     # time interval [seconds] separating consecutive computations of the PCA
 
-        # self.parts_phases = []
         self.estimators_live = []
-        for _ in range(self.partecipants):
+        for _ in range(self.participants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(self.partecipants)]
+        self.kuramoto_phases = [np.zeros(self.participants)]
+
+        self.time_history = [0]
+        self.phases_history = [np.zeros(self.participants)]
+        self.save_path = save_path
+        self.create_folder_if_not_exists(save_path)
 
     def reset_CA(self):
         # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
-        for _ in range(self.partecipants):
+        for _ in range(self.participants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(self.partecipants)]
+        self.kuramoto_phases = [np.zeros(self.participants)]
+
+        self.plot_phases(np.stack(self.phases_history))
+        self.save_data()
+
+        self.phases_history = [np.zeros(self.participants)]
+        self.time_history = []
 
     # This function extracts the 3D data position coming from UE
     def parse_TCP_string(self, string):
@@ -69,13 +75,16 @@ class L3_Wrapper():
 
         ic(time)
 
-        phases = [theta - self.intial_phase]
-        for i in range(self.l3_agent.n_nodes - 1):
-            phases.append(agent.estimators_live[i].estimate_phase(positions[:, i+1], time))           # CA assumes that first position element is the L3 itself
+        phases = []
+        for i in range(self.participants):
+            if i != self.l3_agent.virtual_agent: phases.append(agent.estimators_live[i].estimate_phase(positions[:, i], time))
+            else: phases.append(theta - self.intial_phase)
 
         ic(phases)
 
         self.l3_agent.dt = delta_t
+        self.time_history.append(self.time_history[-1] + delta_t)
+        self.phases_history.append(np.array(phases))
         theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
         # self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))          # comment this and next line and uncomment upper line if L3 is connected with VR agents 
         # theta_next = self.kuramoto_phases[-1][self.l3_agent.virtual_agent]
@@ -87,10 +96,30 @@ class L3_Wrapper():
 
         message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(agent.z))    # Format data as UE Vector
         return message
+    
+    def plot_phases(self, phases):
+        # Plotting
+        plt.figure(figsize=(10, 6))
+        for i in range(self.participants):
+            if i == self.l3_agent.virtual_agent: plt.plot(self.time_history, phases[:, i], color='red', label=f'L3 {i+1}')
+            else: plt.plot(self.time_history, phases[:, i], color='blue', label=f'VH {i+1}')
+
+        plt.title('Phases of Experiment')
+        plt.xlabel('time  (seconds)')
+        plt.ylabel('Phases (radiants)')
+        plt.legend()
+        plt.grid(True)
+
+        plt.savefig(f'{self.save_path}\phases_plot.png')
+        plt.close()
+
+    def save_data(self):
+        np.save(f'{self.save_path}/phases_history.npy', np.stack(self.phases_history))
+        np.save(f'{self.save_path}/time_history.npy', np.stack(self.time_history))
 
     @staticmethod
     def start_connection(address, port):
-        # Create a TCP socket
+        # Create a TCP sockets
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
@@ -110,31 +139,39 @@ class L3_Wrapper():
 
         return connection, client_address
 
+    @staticmethod
+    def create_folder_if_not_exists(folder_path):
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            print(f"Folder created: {folder_path}")
+        else:
+            print(f"Folder already exists: {folder_path}")
+
 
 if __name__ == "__main__":
+    
     parameters = sys.argv[1:]
 
     # Validate inputs to ensure they are numbers
-    validated_inputs = []
+    n_participants = 0
     error = False
-    for param in parameters:
-        try:
-            validated_inputs.append(int(param))  # try converting to float
-        except ValueError:
-            print(f'Invalid input: {param} is not a number, please insert the number of partecipants connected to the L3 CA.')
-            error = True
-            sys.exit(1)
+
+    try:
+        n_participants=(int(parameters[0]))  # try converting to float
+    except ValueError:
+        print(f'Invalid input: {parameters[0]} is not a number, please insert the number of participants connected to the L3 CA.')
+        error = True
+        sys.exit(1) 
 
     # Implement additional error handling
-    if len(validated_inputs) == 0 or validated_inputs[0] <= 0:
-        print('Error: Input is not valid, please insert the number of partecipants connected to the L3 CA.')
+    if n_participants <= 0 or len(parameters) < 2:
+        print('Error: Input is not valid, please insert the number of participants connected to the L3 CA and a valid path to store simlation data')
         sys.exit(1)
     elif not error:
-        n_partecipants = validated_inputs[0] + 1            # participant number is inteded as the number that the L3 is connected to
+        n_participants = n_participants + 1            # participant number is inteded as the number that the L3 is connected to
+        path_to_data = parameters[1]
 
-    ic(n_partecipants)
-
-    agent = L3_Wrapper('CA_pop_synchronization\model', partecipants = n_partecipants)
+    agent = L3_Wrapper('model', participants = n_participants, save_path = path_to_data)
 
     # Set the server address and port (must match with socket in UE)
     SERVER_ADDRESS = 'localhost'
@@ -175,7 +212,7 @@ if __name__ == "__main__":
 
             else:
                 _, position, delta_t = agent.parse_TCP_string(data)
-                position = np.reshape(position, (agent.partecipants, 3)).T
+                position = np.reshape(position, (agent.participants, 3)).T
 
                 if time == 0: agent.intial_position = position[:, 0]
                 
