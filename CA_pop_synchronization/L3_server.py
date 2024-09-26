@@ -183,6 +183,7 @@ if __name__ == "__main__":
         message = 'quit'
         connection.send(message.encode('utf-8'))
         print('Control + C pressed, closing socket...')
+        agent.reset_CA()
         connection.close()
         sys.exit(0)
 
