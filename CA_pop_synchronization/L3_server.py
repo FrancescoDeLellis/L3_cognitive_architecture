@@ -89,23 +89,33 @@ class L3_Wrapper():
         self.time_history.append(self.time_history[-1] + delta_t)
         self.phases_history.append(np.array(phases))
         theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
-        # self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))          # comment this and next line and uncomment upper line if L3 is connected with VR agents 
-        # theta_next = self.kuramoto_phases[-1][self.l3_agent.virtual_agent]
+        self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))          # comment this and next line and uncomment upper line if L3 is connected with VR agents 
+        # theta_next = np.mod(self.kuramoto_phases[-1][self.l3_agent.virtual_agent], 2*np.pi)
 
         ic(theta_next)
 
         self.y = self.amplitude * np.cos(theta_next)
         self.z = self.amplitude * np.sin(theta_next)
 
+        y_k1 = self.amplitude * np.cos(self.kuramoto_phases[-1][1])
+        z_k1 = self.amplitude * np.sin(self.kuramoto_phases[-1][1])
+
+        y_k2 = self.amplitude * np.cos(self.kuramoto_phases[-1][2])
+        z_k2 = self.amplitude * np.sin(self.kuramoto_phases[-1][2])
+
         message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(agent.z))    # Format data as UE Vector
+        message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k1) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k1))
+        message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k2) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k2))
+        
         return message
     
     def plot_phases(self, phases):
         # Plotting
+        colors = ['red', 'blue', 'magenta', 'yellow', 'orange', 'olive', 'cyan']
         plt.figure()
         for i in range(self.participants):
-            if i == self.l3_agent.virtual_agent: plt.plot(self.time_history, phases[:, i], color='red', label=f'L3 {i+1}')
-            else: plt.plot(self.time_history, phases[:, i], color='blue', label=f'VH {i+1}')
+            if i == self.l3_agent.virtual_agent: plt.plot(self.time_history, phases[:, i], color=colors[i], label=f'L3 {i+1}')
+            else: plt.plot(self.time_history, phases[:, i], color=colors[i], label=f'VH {i+1}')
 
         plt.title('Phases of Experiment')
         plt.xlabel('time  (seconds)')
@@ -114,6 +124,19 @@ class L3_Wrapper():
         plt.grid(True)
 
         plt.savefig(f'{self.save_path}\phases_plot.png')
+        plt.close()
+
+        # PLOT ESTIMATION ERROR
+        plt.figure()
+        for i in range(1, self.participants): plt.plot(self.time_history[:-1], np.abs(phases[1:, i] - np.array(self.kuramoto_phases)[:-1, i]), color=colors[i], label=f'VH {i+1}')
+
+        plt.title('Phase Estimation error')
+        plt.xlabel('time  (seconds)')
+        plt.ylabel('Absolute error (radiants)')
+        plt.legend()
+        plt.grid(True)
+
+        plt.savefig(f'{self.save_path}\phases_estimation_error.png')
         plt.close()
 
     def save_data(self):
@@ -174,6 +197,9 @@ if __name__ == "__main__":
     elif not error:
         n_participants = n_participants + 1            # participant number is inteded as the number that the L3 is connected to
         path_to_data = parameters[1]
+
+    n_participants = 3
+    path_to_data = 'simulation_data'
 
     agent = L3_Wrapper('model', participants = n_participants, save_path = path_to_data)
 
