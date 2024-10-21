@@ -29,7 +29,7 @@ class L3_Wrapper():
 
         self.estimators_live = []
         for _ in range(self.participants):
-            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
+            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))     # One estimator for each participant
 
         self.kuramoto_phases = [np.zeros(self.participants)]
 
@@ -79,7 +79,7 @@ class L3_Wrapper():
         ic(time)
 
         phases = []
-        for i in range(self.participants):
+        for i in range(self.participants): # Collect phases of all participants. The ones from other participants are estimated
             if i != self.l3_agent.virtual_agent: phases.append(agent.estimators_live[i].estimate_phase(positions[:, i], time))
             else: phases.append(theta - self.intial_phase)
 
@@ -88,7 +88,7 @@ class L3_Wrapper():
         self.l3_agent.dt = delta_t
         self.time_history.append(self.time_history[-1] + delta_t)
         self.phases_history.append(np.array(phases))
-        theta_next = self.l3_agent.l3_update_phase(np.array(phases))        
+        theta_next = self.l3_agent.l3_update_phase(np.array(phases))    # This function changes the omega of the avatar and outputs its new phase    
         self.kuramoto_phases.append(self.l3_agent.update_phases(self.kuramoto_phases[-1]))          # comment this and next line and uncomment upper line if L3 is connected with VR agents 
         # theta_next = np.mod(self.kuramoto_phases[-1][self.l3_agent.virtual_agent], 2*np.pi)
 
@@ -177,7 +177,7 @@ class L3_Wrapper():
 
 if __name__ == "__main__":
 
-    parameters = sys.argv[1:]
+    parameters = sys.argv[1:] # Takes the parameters (number of participants) from command line
 
     # Validate inputs to ensure they are numbers
     n_participants = 0
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Register the signal handler for SIGINT (Control + C)
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)     # Ctrl + C to interrupt the game
 
     time = 0
 
@@ -226,9 +226,9 @@ if __name__ == "__main__":
     while True:    
         try:
             ic(f'waiting for data')
-            ready_to_read, ready_to_write, exception = select.select([connection], [], [], 5)
-            if ready_to_read: 
-                data = connection.recv(1024).decode()
+            ready_to_read, ready_to_write, exception = select.select([connection], [], [], 5) # 5 is the timeout time (in seconds)
+            if ready_to_read: # Wait for the connection to start reading
+                data = connection.recv(1024).decode() # Receive data for a maximum of 1024 bytes
                 ic(f'Received data: {data}')
 
             if data == '' or not(ready_to_read or ready_to_write or exception): 
@@ -242,17 +242,17 @@ if __name__ == "__main__":
                 time = 0
 
             else:
-                _, position, delta_t = agent.parse_TCP_string(data)
+                _, position, delta_t = agent.parse_TCP_string(data) # Extract data coming from Unreal Engine
                 position = np.reshape(position, (agent.participants, 3)).T
 
                 if time == 0: agent.set_intial_position(position)
                 
-                time += delta_t
+                time += delta_t  # Update time
                 ic(position, delta_t)
-                message = agent.update_position(position, delta_t, time)
+                message = agent.update_position(position, delta_t, time) # Update position
 
                 _, ready_to_write, _ = select.select([], [connection], [])
-                if ready_to_write: connection.send(message.encode('utf-8'))
+                if ready_to_write: connection.send(message.encode('utf-8')) # Send the new positions and time to Unreal Engine
                 ic(f'Message sent: {message}')
 
         except KeyboardInterrupt:
