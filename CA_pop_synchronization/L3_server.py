@@ -9,7 +9,7 @@ ic.configureOutput(prefix='DEBUG | ')
 
 class L3_Wrapper():
 
-    def __init__(self, model_path, save_path, ID = 0, amplitude = 10, omega = 2, participants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 0.25):
+    def __init__(self, model_path, save_path, ID = 0, amplitude = 15, omega = 2, participants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 0.25):
         self.ID = ID                # Python CA instance ID
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega          # Movement frequency                
