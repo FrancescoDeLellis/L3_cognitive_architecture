@@ -198,8 +198,8 @@ if __name__ == "__main__":
         n_participants = n_participants + 1            # participant number is inteded as the number that the L3 is connected to
         path_to_data = parameters[1]
 
-    n_participants = 3
-    path_to_data = 'simulation_data'
+    # n_participants = 3
+    # path_to_data = 'simulation_data'
 
     agent = L3_Wrapper('model', participants = n_participants, save_path = path_to_data)
 
