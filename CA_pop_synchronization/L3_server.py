@@ -63,7 +63,7 @@ class L3_Wrapper():
         return flag, numbers[0:-1], numbers[-1]
     
     def set_intial_position(self, position):
-        self.intial_position = position[:, agent.l3_agent.virtual_agent]
+        self.intial_position = position[:, self.l3_agent.virtual_agent]
         self.intial_phase = 0
         self.positions_history.append(position.T)
 
@@ -80,7 +80,7 @@ class L3_Wrapper():
 
         phases = []
         for i in range(self.participants): # Collect phases of all participants. The ones from other participants are estimated
-            if i != self.l3_agent.virtual_agent: phases.append(agent.estimators_live[i].estimate_phase(positions[:, i], time))
+            if i != self.l3_agent.virtual_agent: phases.append(self.estimators_live[i].estimate_phase(positions[:, i], time))
             else: phases.append(theta - self.intial_phase)
 
         ic(phases)
@@ -103,7 +103,7 @@ class L3_Wrapper():
         y_k2 = self.amplitude * np.cos(self.kuramoto_phases[-1][2])
         z_k2 = self.amplitude * np.sin(self.kuramoto_phases[-1][2])
 
-        message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(agent.z))    # Format data as UE Vector
+        message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(self.z))    # Format data as UE Vector
         message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k1) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k1))
         message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k2) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k2))
         
