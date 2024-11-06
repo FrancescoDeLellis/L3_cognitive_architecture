@@ -17,8 +17,8 @@ class L3_Wrapper():
         self.y = 0  
         self.z = 0  
         self.z_amp_ratio = 0.1    
-        self.intial_position = 0
-        self.intial_phase = 0
+        self.initial_position = 0
+        self.initial_phase = 0
         self.participants = participants
 
         self.l3_phase = []
@@ -63,8 +63,8 @@ class L3_Wrapper():
         return flag, numbers[0:-1], numbers[-1]
     
     def set_intial_position(self, position):
-        self.intial_position = position[:, self.l3_agent.virtual_agent]
-        self.intial_phase = 0
+        self.initial_position = position[:, self.l3_agent.virtual_agent]
+        self.initial_phase = 0
         self.positions_history.append(position.T)
 
     # Calculates the next position and formats the message to be sent to UE for animation
@@ -81,7 +81,7 @@ class L3_Wrapper():
         phases = []
         for i in range(self.participants): # Collect phases of all participants. The ones from other participants are estimated
             if i != self.l3_agent.virtual_agent: phases.append(self.estimators_live[i].estimate_phase(positions[:, i], time))
-            else: phases.append(theta - self.intial_phase)
+            else: phases.append(theta - self.initial_phase)
 
         ic(phases)
 
@@ -103,9 +103,9 @@ class L3_Wrapper():
         y_k2 = self.amplitude * np.cos(self.kuramoto_phases[-1][2])
         z_k2 = self.amplitude * np.sin(self.kuramoto_phases[-1][2])
 
-        message = 'X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + self.y) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(self.z))    # Format data as UE Vector
-        message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k1) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k1))
-        message = message + ';X=' + str(self.intial_position[0]) + ' Y=' + str(self.intial_position[1] + y_k2) + ' Z=' + str(self.intial_position[2] + self.z_amp_ratio * np.abs(z_k2))
+        message = 'X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + self.y) + ' Z=' + str(self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))    # Format data as UE Vector
+        message = message + ';X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + y_k1) + ' Z=' + str(self.initial_position[2] + self.z_amp_ratio * np.abs(z_k1))
+        message = message + ';X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + y_k2) + ' Z=' + str(self.initial_position[2] + self.z_amp_ratio * np.abs(z_k2))
         
         return message
     
