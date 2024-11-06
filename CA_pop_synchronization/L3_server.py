@@ -2,7 +2,8 @@ import socket, select, re, sys, signal, os
 import matplotlib.pyplot as plt
 import numpy as np
 from icecream import ic
-from L3_engine import L3Agent, Phase_estimator_pca_online
+from L3_engine import L3Agent
+from Phase_estimator_pca_online import Phase_estimator_pca_online
 
 
 class L3_Wrapper():
