@@ -8,7 +8,8 @@ from Phase_estimator_pca_online import Phase_estimator_pca_online
 
 class L3_Wrapper():
 
-    def __init__(self, model_path, save_path, ID = 0, amplitude = 15, omega = 2, participants = 3, omega_parts = np.array([0, 3.4, 4.6]), c_strenght = 0.25):
+    def __init__(self, model_path, save_path, ID=0, amplitude=15, omega=2, n_participants=3,
+                 omega_parts=np.array([0, 3.4, 4.6]), c_strenght=0.25):
         self.ID = ID                # Python CA instance ID
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega          # Movement frequency
@@ -18,22 +19,22 @@ class L3_Wrapper():
         self.z_amp_ratio = 0.1
         self.initial_position = 0
         self.initial_phase = 0
-        self.participants = participants
+        self.n_participants = n_participants
 
         self.l3_phase = []
-        self.l3_agent = L3Agent(participants, omega_parts, c_strenght, model_path)
+        self.l3_agent = L3Agent(n_participants, omega_parts, c_strenght, model_path)
 
         self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operatedf
         self.interval_between_pca = 1     # time interval [seconds] separating consecutive computations of the PCA
 
         self.estimators_live = []
-        for _ in range(self.participants):
+        for _ in range(self.n_participants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))     # One estimator for each participant
 
-        self.kuramoto_phases = [np.zeros(self.participants)]
+        self.kuramoto_phases = [np.zeros(self.n_participants)]
 
         self.time_history = [0]
-        self.phases_history = [np.zeros(self.participants)]
+        self.phases_history = [np.zeros(self.n_participants)]
         self.positions_history = []
         self.save_path = save_path
         self.create_folder_if_not_exists(save_path)
@@ -45,12 +46,12 @@ class L3_Wrapper():
 
         # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
-        for _ in range(self.participants):
+        for _ in range(self.n_participants):
             self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
 
-        self.kuramoto_phases = [np.zeros(self.participants)]
+        self.kuramoto_phases = [np.zeros(self.n_participants)]
 
-        self.phases_history = [np.zeros(self.participants)]
+        self.phases_history = [np.zeros(self.n_participants)]
         self.time_history = [0]
         self.positions_history = []
 
@@ -78,7 +79,7 @@ class L3_Wrapper():
         ic(time)
 
         phases = []
-        for i in range(self.participants): # Collect phases of all participants. The ones from other participants are estimated
+        for i in range(self.n_participants): # Collect phases of all participants. The ones from other participants are estimated
             if i != self.l3_agent.virtual_agent: phases.append(self.estimators_live[i].estimate_phase(positions[:, i], time))
             else: phases.append(theta - self.initial_phase)
 
@@ -112,7 +113,7 @@ class L3_Wrapper():
         # Plotting
         colors = ['red', 'blue', 'magenta', 'yellow', 'orange', 'olive', 'cyan']
         plt.figure()
-        for i in range(self.participants):
+        for i in range(self.n_participants):
             if i == self.l3_agent.virtual_agent: plt.plot(self.time_history, phases[:, i], color=colors[i], label=f'L3 {i+1}')
             else: plt.plot(self.time_history, phases[:, i], color=colors[i], label=f'VH {i+1}')
 
@@ -127,7 +128,7 @@ class L3_Wrapper():
 
         # PLOT ESTIMATION ERROR
         plt.figure()
-        for i in range(1, self.participants): plt.plot(self.time_history[:-1], np.abs(phases[1:, i] - np.array(self.kuramoto_phases)[:-1, i]), color=colors[i], label=f'VH {i+1}')
+        for i in range(1, self.n_participants): plt.plot(self.time_history[:-1], np.abs(phases[1:, i] - np.array(self.kuramoto_phases)[:-1, i]), color=colors[i], label=f'VH {i + 1}')
 
         plt.title('Phase Estimation error')
         plt.xlabel('time  (seconds)')

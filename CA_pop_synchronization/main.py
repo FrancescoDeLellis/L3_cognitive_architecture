@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # n_participants = 3
     # path_to_data = 'simulation_data'
 
-    agent = L3_Wrapper('model', participants=n_participants, save_path=path_to_data)
+    agent = L3_Wrapper('model', save_path=path_to_data, n_participants=n_participants)
 
     # Set the server address and port (must match with socket in UE)
     SERVER_ADDRESS = 'localhost'
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
             else:
                 _, position, delta_t = agent.parse_TCP_string(data)  # Extract data coming from Unreal Engine
-                position = np.reshape(position, (agent.participants, 3)).T
+                position = np.reshape(position, (agent.n_participants, 3)).T
 
                 if time == 0: agent.set_intial_position(position)
 
