@@ -4,10 +4,9 @@ import cmath
 import math
 import numpy as np
 from sklearn.decomposition import PCA  # TODO remove?
-from util import *
-
-from CA_pop_synchronization.util import compute_average_phasor
+from util import wrap_angle, compute_average_phasor
 from Phase_estimator_pca_online import Phase_estimator_pca_online  # TODO remove?
+
 
 # ---------------------------------------------------------------- DQN BASED L3 AGENT
 class L3_Agent:
