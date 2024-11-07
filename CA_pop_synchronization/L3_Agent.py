@@ -23,6 +23,7 @@ class L3_Agent:
         self.model = loaded_model.signatures['serving_default']
         self.actions = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
         self.virtual_agent = virtual_agent
+        self.wrapping_domain = '-pi to pi'
 
     def wrapped_difference(self, angle1, angle2):
         diff = angle1 - angle2
@@ -34,13 +35,6 @@ class L3_Agent:
 
         return diff
 
-    def wrapping(self, theta):
-        if theta > np.pi:
-            theta -= 2 * np.pi
-        elif theta < -np.pi:
-            theta += 2 * np.pi
-
-        return theta
 
     def kuramoto_dynamics(self, theta_old, num_nodes, natural_frequency, dt, coupling):
         theta_new = np.zeros(num_nodes)
@@ -49,7 +43,7 @@ class L3_Agent:
             for ii in range(num_nodes):
                 sum_coupling += coupling[i, ii] * np.sin(theta_old[i] - theta_old[ii])
             theta_new[i] = theta_old[i] + dt * (natural_frequency[i] - sum_coupling)
-        return [self.wrapping(theta) for theta in theta_new]
+        return [wrap_angle(theta, self.wrapping_domain) for theta in theta_new]
     
     def l3_update(self, theta_old):
         sum_coupling = 0
