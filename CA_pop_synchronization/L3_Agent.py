@@ -4,6 +4,9 @@ import cmath
 import math
 import numpy as np
 from sklearn.decomposition import PCA  # TODO remove?
+from util import *
+
+from CA_pop_synchronization.util import compute_average_phasor
 from Phase_estimator_pca_online import Phase_estimator_pca_online  # TODO remove?
 
 # ---------------------------------------------------------------- DQN BASED L3 AGENT
@@ -20,10 +23,6 @@ class L3_Agent:
         self.model = loaded_model.signatures['serving_default']
         self.actions = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
         self.virtual_agent = virtual_agent
-
-    def order_parameter(self, theta, number_nodes):
-        z = 1 / number_nodes * sum([cmath.exp(complex(0, theta[node])) for node in range(number_nodes)])
-        return z
 
     def wrapped_difference(self, angle1, angle2):
         diff = angle1 - angle2
@@ -65,9 +64,9 @@ class L3_Agent:
         for i in range(1, len(theta_obs)):
             theta_i = theta_obs[i]
             obs_pos[i] = self.wrapped_difference(theta_a, theta_i)
-        order_parameter_complex = self.order_parameter(obs_pos[1:], len(obs_pos[1:]))
-        mean_obs_pos = cmath.phase(order_parameter_complex)
-        var_obs_pos = 1 - np.abs(order_parameter_complex)
+        average_phasor = compute_average_phasor(obs_pos[1:])
+        mean_obs_pos = cmath.phase(average_phasor)
+        var_obs_pos = 1 - np.abs(average_phasor)
 
         return mean_obs_pos, var_obs_pos, omega[virtual_agent]
 
