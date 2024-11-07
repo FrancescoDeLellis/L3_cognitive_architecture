@@ -2,7 +2,7 @@ import socket, select, re, sys, signal, os
 import matplotlib.pyplot as plt
 import numpy as np
 from icecream import ic
-from L3_engine import L3Agent
+from L3_Agent import L3_Agent
 from Phase_estimator_pca_online import Phase_estimator_pca_online
 
 
@@ -22,7 +22,7 @@ class L3_Wrapper():
         self.n_participants = n_participants
 
         self.l3_phase = []
-        self.l3_agent = L3Agent(n_participants, omega_parts, c_strenght, model_path)
+        self.l3_agent = L3_Agent(n_participants, omega_parts, c_strenght, model_path)
 
         self.window_pca           = 4     # duration of the time window [seconds] in which the PCA is operatedf
         self.interval_between_pca = 1     # time interval [seconds] separating consecutive computations of the PCA

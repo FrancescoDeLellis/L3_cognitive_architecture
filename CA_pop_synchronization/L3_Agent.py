@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA  # TODO remove?
 from Phase_estimator_pca_online import Phase_estimator_pca_online  # TODO remove?
 
 # ---------------------------------------------------------------- DQN BASED L3 AGENT
-class L3Agent:
+class L3_Agent:
     def __init__(self, n_nodes, omega_vals, coupling_strenght, model_path, dt=0.01, virtual_agent = 0):
 
         self.graph_nx = nx.complete_graph(n_nodes)
