@@ -1,3 +1,4 @@
+import cmath
 import numpy as np
 from typing import Sequence
 
@@ -11,5 +12,13 @@ def wrap_angle(angle_rads: float, domain: str) -> float:
         raise ValueError(f"The value of domain '{domain}' is not acceptable.")
 
 
+def compute_average_phasor(angles: Sequence[float]) -> float:
+    return np.mean(np.exp(1j * np.array(angles)))
+
+
+def compute_average_angle(angles: Sequence[float]) -> float:
+    return cmath.phase(compute_average_phasor(angles))
+
+
 def compute_order_parameter(angles: Sequence[float]) -> float:
-    return np.abs(np.mean(np.exp(1j * np.array(angles))))
+    return np.abs(compute_average_phasor(angles))
