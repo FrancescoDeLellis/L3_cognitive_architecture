@@ -25,16 +25,6 @@ class L3_Agent:
         self.virtual_agent = virtual_agent
         self.wrapping_domain = '-pi to pi'
 
-    def wrapped_difference(self, angle1, angle2):
-        diff = angle1 - angle2
-
-        if diff > np.pi:
-            diff -= 2 * np.pi
-        elif diff < -np.pi:
-            diff += 2 * np.pi
-
-        return diff
-
 
     def kuramoto_dynamics(self, theta_old, num_nodes, natural_frequency, dt, coupling):
         theta_new = np.zeros(num_nodes)
@@ -57,7 +47,7 @@ class L3_Agent:
         theta_a = theta_obs[virtual_agent]
         for i in range(1, len(theta_obs)):
             theta_i = theta_obs[i]
-            obs_pos[i] = self.wrapped_difference(theta_a, theta_i)
+            obs_pos[i] = wrap_angle(theta_a - theta_i, self.wrapping_domain)
         average_phasor = compute_average_phasor(obs_pos[1:])
         mean_obs_pos = cmath.phase(average_phasor)
         var_obs_pos = 1 - np.abs(average_phasor)
