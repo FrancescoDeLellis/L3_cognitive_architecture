@@ -67,7 +67,7 @@ class Phase_estimator_pca_online:
 
         if self.is_first_pca_computed:
             pca_vec = self.pca.components_[0]
-            if np.dot(pca_vec, prev_pca_vec) < 0:  self.pca_direction = -1 * self.pca_direction
+            if np.dot(pca_vec, prev_pca_vec) < 0:  self.pca_direction = -1 * self.pca_direction  # TODO should prev_pca_vec be self.prev_pca_vec?
 
         score = self.pca_direction * np.reshape(self.pca.transform(np.array(self.trajectory)[-idx:, :]), -1)
         max_score = max(score)
