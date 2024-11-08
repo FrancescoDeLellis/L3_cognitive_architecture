@@ -46,3 +46,12 @@ def saturate_hard(x: float, thres: float) -> float:
 def bump_fun(x: float) -> float:
     if abs(x) >= 1:  return 0
     else:            return np.exp(1 - 1 / (1 - np.abs(x) ** 2))
+
+def kuramoto_dynamics(theta_old, num_nodes, natural_frequency, dt, coupling, wrapping_domain):
+    theta_new = np.zeros(num_nodes)
+    for i in range(num_nodes):
+        sum_coupling = 0
+        for ii in range(num_nodes):
+            sum_coupling += coupling[i, ii] * np.sin(theta_old[i] - theta_old[ii])
+        theta_new[i] = theta_old[i] + dt * (natural_frequency[i] - sum_coupling)
+    return [wrap_angle(theta, wrapping_domain) for theta in theta_new]
