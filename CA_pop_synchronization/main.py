@@ -82,7 +82,7 @@ if __name__ == "__main__":
                 _, position, delta_t = agent.parse_TCP_string(data)  # Extract data coming from Unreal Engine
                 position = np.reshape(position, (agent.n_participants, 3)).T
 
-                if time == 0: agent.set_intial_position(position)
+                if time == 0: agent.set_initial_position(position)
 
                 time += delta_t  # Update time
                 ic(position, delta_t)

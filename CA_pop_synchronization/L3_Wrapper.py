@@ -10,7 +10,7 @@ from util import create_folder_if_not_exists
 class L3_Wrapper():
 
     def __init__(self, model_path, save_path, ID=0, amplitude=15, omega=2, n_participants=3,
-                 omega_parts=np.array([0, 3.4, 4.6]), c_strenght=0.25):
+                 omega_parts=np.array([0, 3.4, 4.6]), c_strength=0.25):
         self.ID = ID  # Python CA instance ID
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega  # Movement frequency
@@ -23,7 +23,7 @@ class L3_Wrapper():
         self.n_participants = n_participants
 
         self.l3_phase = []
-        self.l3_agent = L3_Agent(n_participants, omega_parts, c_strenght, model_path)
+        self.l3_agent = L3_Agent(n_participants, omega_parts, c_strength, model_path)
 
         self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operatedf
         self.interval_between_pca = 1  # time interval [seconds] separating consecutive computations of the PCA
@@ -64,7 +64,7 @@ class L3_Wrapper():
         flag = len(numbers) == 3 * self.l3_agent.n_nodes + 1
         return flag, numbers[0:-1], numbers[-1]
 
-    def set_intial_position(self, position):
+    def set_initial_position(self, position):
         self.initial_position = position[:, self.l3_agent.virtual_agent]
         self.initial_phase = 0
         self.positions_history.append(position.T)
