@@ -25,7 +25,7 @@ class L3_Wrapper():
         self.l3_phase = []
         self.l3_agent = L3_Agent(n_participants, omega_parts, c_strength, model_path)
 
-        self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operatedf
+        self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operated
         self.interval_between_pca = 1  # time interval [seconds] separating consecutive computations of the PCA
 
         self.estimators_live = []
