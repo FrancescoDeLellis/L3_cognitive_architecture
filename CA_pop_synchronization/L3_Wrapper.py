@@ -154,9 +154,9 @@ class L3_Wrapper():
         plt.close()
 
     def save_data(self):
-        np.save(f'{self.save_path}/phases_history.npy', np.stack(self.phases_history))
+        np.save(f'{self.save_path}/phases_history.npy',   np.stack(self.phases_history))
         np.save(f'{self.save_path}/postions_history.npy', np.array(self.positions_history))
-        np.save(f'{self.save_path}/time_history.npy', np.stack(self.time_history))
+        np.save(f'{self.save_path}/time_history.npy',     np.stack(self.time_history))
 
     @staticmethod
     def start_connection(address, port):
