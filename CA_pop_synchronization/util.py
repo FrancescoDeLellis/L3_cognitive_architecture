@@ -47,11 +47,10 @@ def bump_fun(x: float) -> float:
     if abs(x) >= 1:  return 0
     else:            return np.exp(1 - 1 / (1 - np.abs(x) ** 2))
 
-def kuramoto_dynamics(theta_old, num_nodes, natural_frequency, dt, coupling, wrapping_domain):
-    theta_new = np.zeros(num_nodes)
-    for i in range(num_nodes):
-        sum_coupling = 0
-        for ii in range(num_nodes):
-            sum_coupling += coupling[i, ii] * np.sin(theta_old[i] - theta_old[ii])
-        theta_new[i] = theta_old[i] + dt * (natural_frequency[i] - sum_coupling)
-    return [wrap_angle(theta, wrapping_domain) for theta in theta_new]
+def kuramoto_dynamics(theta_old, num_nodes, natural_frequency, dt, coupling, adjacency_matrix, wrapping_domain):
+    delta_theta = theta_old.reshape(num_nodes, 1)-theta_old.reshape(1, num_nodes)  # Matrix of all the phase differences (theta_i - theta_j)
+    sin_delta_theta = np.sin(-delta_theta)  # Matrix of sines of all the phase differences. (minus because of theta_j - theta_i)
+    theta_dots = natural_frequency + coupling * np.sum(adjacency_matrix * sin_delta_theta, 1)
+    theta_new = theta_old + dt * theta_dots
+    
+    return np.array([wrap_angle(theta, wrapping_domain) for theta in theta_new])
