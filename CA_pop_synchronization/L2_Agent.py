@@ -7,13 +7,14 @@ from util import wrap_angle, saturate_soft, saturate_hard, bump_fun
 # L2 AGENT ---------------------------------------
 class L2Agent:
     def __init__(self,
-                 dt             : float = 0.01     , # sampling time                                               , used to update the dynamic threshold
-                 thres_min      : float = 0        , # minimum value [rad] the threshold can take
-                 thres_max      : float = np.pi / 2, # maximum value [rad] the threshold can take
-                 speed_thres    : float = 4        , # time constant                                               : 1/speed_thres                       , settling time to 1% = 4.6/speed_thres
-                 damping_factor : float = 4        , # dynamics of thres is damping_factor times slower when growing w.r.t. when decreasing
-                 mode_saturation: str   = "soft"   , # use 'soft' or 'hard' saturation for the blending
-                 p_norm         : int   = 20       , # coefficient to approximate a saturation in the 'soft' method
+                 dt                  : float = 0.01     , # sampling time                                               , used to update the dynamic threshold
+                 thres_min           : float = 0        , # minimum value [rad] the threshold can take
+                 thres_max           : float = np.pi / 2, # maximum value [rad] the threshold can take
+                 speed_thres         : float = 4        , # time constant                                               : 1/speed_thres                       , settling time to 1% = 4.6/speed_thres
+                 damping_factor      : float = 4        , # dynamics of thres is damping_factor times slower when growing w.r.t. when decreasing
+                 mode_saturation     : str   = "soft"   , # use 'soft' or 'hard' saturation for the blending
+                 p_norm              : int   = 20       , # coefficient to approximate a saturation in the 'soft' method
+                 virtual_agent_index : int   = 0        , # index of the l2
                  ) -> None:
         self.dt              = dt
         self.thres           = thres_max
@@ -25,6 +26,7 @@ class L2Agent:
         if   mode_saturation == "soft":  self.saturate = partial(saturate_soft, p=p_norm)
         elif mode_saturation == "hard":  self.saturate = saturate_hard
         else:  raise ValueError(f"Invalid value for mode_saturation: {mode_saturation}")
+        self.virtual_agent_index = virtual_agent_index
 
 
     def compute_phase_L2(self, phase_L0: float, phase_ideal: float) -> float:

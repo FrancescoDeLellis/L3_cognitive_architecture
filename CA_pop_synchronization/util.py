@@ -54,3 +54,14 @@ def kuramoto_dynamics(theta_old, num_nodes, natural_frequency, dt, coupling, adj
     theta_new = theta_old + dt * theta_dots
     
     return np.array([wrap_angle(theta, wrapping_domain) for theta in theta_new])
+
+
+def produce_spike_signal_L0(omega_L0, A_spike, interv_spike, length_spike, time_end, dt): # This function produces a test signal to simulate a L0. Don't use it during experiments with real people
+    time = np.arange(0, time_end, dt)
+    phase_L0_vec = omega_L0 * time
+    for spike_time in np.arange(0, time_end, interv_spike):
+        spike_indices = (time >= spike_time) & (time < spike_time + length_spike)
+        phase_L0_vec[spike_indices] -= A_spike
+    phase_L0_vec = np.mod(phase_L0_vec + np.pi, 2 * np.pi) - np.pi
+    return phase_L0_vec
+
