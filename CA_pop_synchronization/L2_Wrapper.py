@@ -123,14 +123,11 @@ class L2Wrapper():
         theta_next_l2 = self.l2_agent.compute_phase_L2(phase_L0, theta_next_l3)  # Compute the new phase of L2 by blending the ones of L0 and L3
         ic(theta_next_l2)
 
-        amplitude_pos = np.mean(positive_amplitudes) 
-        amplitude_neg = np.mean(negative_amplitudes)
-        
-        if np.cos(theta_next_l2 > 0): # First order filtering on the amplitude
-            self.amplitude = (1-self.filtering_coef*self.l2_agent.dt) * self.amplitude - self.filtering_coef * self.l2_agent.dt * amplitude_pos
-        else:
-            self.amplitude = (1-self.filtering_coef*self.l2_agent.dt) * self.amplitude - self.filtering_coef * self.l2_agent.dt * amplitude_neg
-        
+        # First order filtering on the amplitude
+        if np.cos(theta_next_l2 > 0):  steady_state_val = np.mean(positive_amplitudes)
+        else:                          steady_state_val = np.mean(negative_amplitudes)
+        self.amplitude = (1-self.filtering_coef*self.l2_agent.dt) * self.amplitude + self.filtering_coef * self.l2_agent.dt * steady_state_val
+
         ic(self.amplitude)
 
         self.y = self.amplitude * np.cos(theta_next_l3)
