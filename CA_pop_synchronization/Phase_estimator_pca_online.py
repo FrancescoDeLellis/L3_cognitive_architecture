@@ -29,6 +29,9 @@ class Phase_estimator_pca_online:
         self.amplitude_pos_n = 1
         self.amplitude_pos_p = 1
 
+        self.n_samples_initial_direction_pca = 20  # Consider the first samples to determine which is the direction of the PCA
+        self.start_from_extended_position = True  # For consistency, all instances of the class should have this equal. True means that the person starts with the arm extended position, 
+
     def estimate_phase(self, position, current_time):
         self.time_instants.append(current_time)
         current_time = self.time_instants[-1]
@@ -43,6 +46,7 @@ class Phase_estimator_pca_online:
                 self.time_last_pca = current_time
                 self.compute_PCA()
                 self.is_first_pca_computed = True
+                
         else:
             if current_time - self.time_last_pca >= self.interval_between_pca:
                 self.time_last_pca = current_time
@@ -65,9 +69,20 @@ class Phase_estimator_pca_online:
 
         self.pca.fit(np.array(self.trajectory)[-idx:, :])
 
-        if self.is_first_pca_computed:
+        if self.is_first_pca_computed: 
             pca_vec = self.pca.components_[0]
             if np.dot(pca_vec, prev_pca_vec) < 0:  self.pca_direction = -1 * self.pca_direction  # TODO should prev_pca_vec be self.prev_pca_vec?
+        else: # The first time you compute the PCA
+            n_samples = min(len(self.trajectory), self.n_samples_initial_direction_pca)     # Take the first n_samples of the trajectory
+            velocity = np.empty((self.trajectory[0].shape[0], n_samples-1))
+            for i in range(n_samples-1): # Compute the velocity in this n_samples time instants
+                velocity[:, i] = (self.trajectory[i+1]-self.trajectory[i])/(self.time_instants[i+1]-self.time_instants[i])
+            avg_vel = np.mean(velocity, axis = 1) # Compute the average velocity in the first n_samples time instants
+            if self.start_from_extended_position == True:    # If all the people start from the arm extended position
+                if np.dot(self.pca.components_[0], avg_vel) > 0:  self.pca.components_[0] = -1 * self.pca.components_[0] # Rotate the pca vector when PCA and avg_vel are concordant
+            else:   # If all the people start from the arm flexed position
+                if np.dot(self.pca.components_[0], avg_vel) < 0:  self.pca.components_[0] = -1 * self.pca.components_[0] 
+
 
         score = self.pca_direction * np.reshape(self.pca.transform(np.array(self.trajectory)[-idx:, :]), -1)
         max_score = max(score)
