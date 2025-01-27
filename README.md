@@ -28,7 +28,7 @@ This blueprint connects the character behaviour with Python commands using TCP s
 - `L3_client.py` sends data points in the 3D space used as target values for the left hand IK control.
 - Such data is stored in a local varible and, it is continously checked by the animgraph to set target location for the left hand IK rig which updates the full body posture.
 
-## PoP Synchronization Demo
+## AI-Kuramoto Synchronization Demo
 To run the demo application:
 - Move in the folder CA_pop_synchronization and launch the python script `L3_server.py` passing the number of participant the L3 has to interact with and wait for the TCP socket to be online (see prompt messages).
 - Launch the  `L3_test` unreal project to render simulated L3 behaviour
