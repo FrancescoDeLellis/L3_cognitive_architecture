@@ -1,4 +1,4 @@
-# L3 Cognitive Architecture Demo 
+# Cognitive Architecture for Autonomous Agent Demo 
 
 To set up your machine:
 - Install python packages running `pip install -r python_packages.txt`.
