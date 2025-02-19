@@ -6,7 +6,7 @@ from icecream import ic
 from L2_Agent import L2Agent
 from L3_Agent import L3_Agent
 from Phase_estimator_pca_online import Phase_estimator_pca_online
-from util import create_folder_if_not_exists, kuramoto_dynamics
+from util import create_folder_if_not_exists, kuramoto_dynamics, wrap_angle
 from typing import Sequence # For type hinting numpy array
 
 class L2Wrapper():
@@ -114,10 +114,21 @@ class L2Wrapper():
         self.time_history.append(self.time_history[-1] + delta_t)
         self.phases_history.append(np.array(phases))
 
+        # We consider the first Kuramoto as the L0
+        theta_old = np.array((self.l2_phase[-1], phase_L0, self.kuramoto_phases[-1][2])) # Collect thetas at time t-1
+        theta_next_kuramoto = kuramoto_dynamics(theta_old,self.l3_agent.n_nodes,self.l3_agent.omega_vals,self.l3_agent.dt, self.l3_agent.coupling_strength, self.adjacency_matrix,
+                                           self.l3_agent.wrapping_domain) # Compute theta of Kuramoto agents at time t
+        # self.kuramoto_phases.append(theta_next_kuramoto)
+        self.kuramoto_phases.append(np.array([theta_next_kuramoto[0], wrap_angle(phase_L0, '-pi to pi'), theta_next_kuramoto[2]])) # The first phase is given by the signal of L0, the second by the Kuramoto dynamics 
+                                                                                                            # Needed for plotting estimation error
+
+        '''
+        # To use when you want a demo with two Kuramotos
         theta_old = np.array((self.l2_phase[-1],self.kuramoto_phases[-1][1],self.kuramoto_phases[-1][2])) # Collect thetas at time t-1
         theta_next_kuramoto = kuramoto_dynamics(theta_old,self.l3_agent.n_nodes,self.l3_agent.omega_vals,self.l3_agent.dt, self.l3_agent.coupling_strength, self.adjacency_matrix,
                                            self.l3_agent.wrapping_domain) # Compute theta of Kuramoto agents at time t
         self.kuramoto_phases.append(theta_next_kuramoto)
+        '''
         theta_next_l3 = self.l3_agent.l3_update_phase(np.array(phases))  # This function changes the omega of the L3 and outputs its new phase at time t
 
         theta_next_l2 = self.l2_agent.compute_phase_L2(phase_L0, theta_next_l3)  # Compute the new phase of L2 by blending the ones of L0 and L3
@@ -133,8 +144,12 @@ class L2Wrapper():
         self.y = self.amplitude * np.cos(theta_next_l3)
         self.z = self.amplitude * np.sin(theta_next_l3)
 
+        '''
         y_k1 = self.amplitude_k1 * np.cos(self.kuramoto_phases[-1][1])
         z_k1 = self.amplitude_k1 * np.sin(self.kuramoto_phases[-1][1])
+        '''
+        y_k1 = self.amplitude_k1 * np.cos(phase_L0)  # We suppose that one Kuramoto is the L0 now 
+        z_k1 = self.amplitude_k1 * np.sin(phase_L0)
 
         y_k2 = self.amplitude_k2 * np.cos(self.kuramoto_phases[-1][2])
         z_k2 = self.amplitude_k2 * np.sin(self.kuramoto_phases[-1][2])

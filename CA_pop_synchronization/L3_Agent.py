@@ -4,6 +4,7 @@ import math
 import numpy as np
 from typing import Sequence # For type hinting numpy arrays
 from util import wrap_angle, compute_average_phasor
+import time
 
 # TODO MC: can we implement type hinting for the methods?
 
@@ -66,5 +67,4 @@ class L3_Agent:
         omega_delta = self.take_action(action)
         self.omega_vals[self.virtual_agent_index] += omega_delta
         self.omega_vals[self.virtual_agent_index] = np.clip(self.omega_vals[self.virtual_agent_index], -self.omega_sat, self.omega_sat) # Saturation on the value of omega
-
         return self.l3_update(theta)
