@@ -2,7 +2,7 @@ import math
 import numpy as np
 from sklearn.decomposition import PCA
 
-class Phase_estimator_pca_online:
+class OnlinePhaseEstimatorViaProjection:
     def __init__(self, window_for_offset_update, interv_betw_offset_updates, projection_axis=np.array([0, 1, 0])):
         self.trajectory    = []
         self.time_instants = []

@@ -5,7 +5,7 @@ import numpy as np
 from icecream import ic
 from L2_Agent import L2Agent
 from L3_Agent import L3_Agent
-from Phase_estimator_pca_online import Phase_estimator_pca_online
+from OnlinePhaseEstimatorViaProjection import OnlinePhaseEstimatorViaProjection
 from util import create_folder_if_not_exists, kuramoto_dynamics, wrap_angle
 from typing import Sequence # For type hinting numpy array
 
@@ -41,8 +41,8 @@ class L2Wrapper():
 
         self.estimators_live = []
         for _ in range(self.n_participants):
-            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca,
-                                                                   self.interval_between_pca))  # One estimator for each participant
+            self.estimators_live.append(OnlinePhaseEstimatorViaProjection(self.window_pca,
+                                                                          self.interval_between_pca))  # One estimator for each participant
             
         self.amplitude_k1 = 0.9     # Amplitude of oscillation of the first kuramoto
         self.amplitude_k2 = 1.4     # Amplitude of oscillation of the second kuramoto      
@@ -62,7 +62,7 @@ class L2Wrapper():
         # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
         for _ in range(self.n_participants):
-            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
+            self.estimators_live.append(OnlinePhaseEstimatorViaProjection(self.window_pca, self.interval_between_pca))
 
         self.kuramoto_phases = [np.zeros(self.n_participants)]
 
