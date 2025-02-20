@@ -64,19 +64,19 @@ class Phase_estimator_pca_online:
 
         # Update positions and velocities using new offset
         score = project_onto(np.array(self.trajectory)[-3, :], self.projection_axis)
-        self.pos_projected = score[0, 0] - self.pos_projected_offset
+        self.pos_projected = score - self.pos_projected_offset
 
         score = project_onto(np.array(self.trajectory)[-4, :], self.projection_axis)
-        self.pos_projected_prev = score[0, 0] - self.pos_projected_offset
+        self.pos_projected_prev = score - self.pos_projected_offset
 
         sampling_time = self.time_instants[-4] - self.time_instants[-3]
         self.vel_projected_prev = (self.pos_projected - self.pos_projected_prev) / sampling_time
 
         score = project_onto(np.array(self.trajectory)[-2, :], self.projection_axis)
-        self.pos_projected = score[0, 0] - self.pos_projected_offset
+        self.pos_projected = score - self.pos_projected_offset
 
         score = project_onto(np.array(self.trajectory)[-3, :], self.projection_axis)
-        self.pos_projected_prev = score[0, 0] - self.pos_projected_offset
+        self.pos_projected_prev = score - self.pos_projected_offset
 
         sampling_time = self.time_instants[-2] - self.time_instants[-3]
         self.vel_projected = (self.pos_projected - self.pos_projected_prev) / sampling_time
@@ -90,7 +90,7 @@ class Phase_estimator_pca_online:
 
         sampling_time = self.time_instants[-1] - self.time_instants[-2]
 
-        self.pos_projected = score[0, 0] - self.pos_projected_offset
+        self.pos_projected = score - self.pos_projected_offset
         self.vel_projected = (self.pos_projected - self.pos_projected_prev) / sampling_time
         self.acc_projected = (self.vel_projected - self.vel_projected_prev) / sampling_time
 
