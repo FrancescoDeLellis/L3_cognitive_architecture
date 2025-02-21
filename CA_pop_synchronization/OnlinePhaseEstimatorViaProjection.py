@@ -10,7 +10,7 @@ class OnlinePhaseEstimatorViaProjection:
                  interv_betw_offset_updates,
                  projection_axis                 = np.array([0, 1, 0]),
                  time_const_lowpass_filter_phase = None,
-                 wrap_interv                     = "-pi_to_2pi"):
+                 wrap_interv                     = "-pi_to_pi"):
 
         self.window_for_offset_update        = window_for_offset_update    # [s]
         self.interv_betw_offset_updates      = interv_betw_offset_updates  # [s]
@@ -38,8 +38,8 @@ class OnlinePhaseEstimatorViaProjection:
         self.amplitude_pos_n = 1
         self.amplitude_pos_p = 1
 
-        if   wrap_interv == "0_to_2pi":   self.wrap_fun = wrap_to_2pi
-        elif wrap_interv == "-pi_to_pi":  self.wrap_fun = wrap_to_pi
+        if   self.wrap_interv == "0_to_2pi":   self.wrap_fun = wrap_to_2pi
+        elif self.wrap_interv == "-pi_to_pi":  self.wrap_fun = wrap_to_pi
         else:                             raise ValueError("wrap_interv must be in {'-pi_to_pi', '0_to_2pi'}")
 
         if self.time_const_lowpass_filter_phase in {None, 0, -1}:
