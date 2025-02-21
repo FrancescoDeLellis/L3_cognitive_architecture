@@ -1,16 +1,25 @@
 import math
 import numpy as np
 from sklearn.decomposition import PCA
+from LowPassFilters import LowPassFilterPhase, wrap_to_2pi, wrap_to_pi
 
 class OnlinePhaseEstimatorViaProjection:
-    def __init__(self, window_for_offset_update, interv_betw_offset_updates, projection_axis=np.array([0, 1, 0])):
+
+    def __init__(self,
+                 window_for_offset_update,
+                 interv_betw_offset_updates,
+                 projection_axis                 = np.array([0, 1, 0]),
+                 time_const_lowpass_filter_phase = None,
+                 wrap_interv                     = "-pi_to_2pi"):
+
+        self.window_for_offset_update        = window_for_offset_update    # [s]
+        self.interv_betw_offset_updates      = interv_betw_offset_updates  # [s]
+        self.projection_axis                 = projection_axis  # onto which motion is projected
+        self.time_const_lowpass_filter_phase = time_const_lowpass_filter_phase
+        self.wrap_interv                     = wrap_interv
+
         self.trajectory    = []
         self.time_instants = []
-
-        self.window_for_offset_update   = window_for_offset_update    # [s]
-        self.interv_betw_offset_updates = interv_betw_offset_updates  # [s]
-
-        self.projection_axis = projection_axis  # onto which motion is projected
 
         self.pos_projected        = 0
         self.pos_projected_prev   = 0
@@ -28,6 +37,15 @@ class OnlinePhaseEstimatorViaProjection:
         self.amplitude_vel_n = 1
         self.amplitude_pos_n = 1
         self.amplitude_pos_p = 1
+
+        if   wrap_interv == "0_to_2pi":   self.wrap_fun = wrap_to_2pi
+        elif wrap_interv == "-pi_to_pi":  self.wrap_fun = wrap_to_pi
+        else:                             raise ValueError("wrap_interv must be in {'-pi_to_pi', '0_to_2pi'}")
+
+        if self.time_const_lowpass_filter_phase in {None, 0, -1}:
+            self.is_use_lowpass_filter_phase = False
+        else:  self.is_use_lowpass_filter_phase = True
+        self.is_lowpass_filter_phase_initialized = False
 
 
     def estimate_phase(self, position, curr_time):
@@ -47,7 +65,20 @@ class OnlinePhaseEstimatorViaProjection:
                 self.time_last_offset_update = curr_time
                 self.update_offset()
 
-        if self.is_first_offset_computed:  self.update_phase()
+        if self.is_first_offset_computed:
+            self.update_phase()
+
+            if self.is_use_lowpass_filter_phase:
+                if not self.is_lowpass_filter_phase_initialized:
+                    self.lowpass_filter_phase = LowPassFilterPhase(init_state=self.phase,
+                                                                   time_step=0,
+                                                                   time_const=self.time_const_lowpass_filter_phase,
+                                                                   wrap_interv=self.wrap_interv)
+                else:
+                    time_step = self.time_instants[-1] - self.time_instants[-2]
+                    self.lowpass_filter_phase.change_time_step(time_step)
+                    self.lowpass_filter_phase.set_time_const(self.time_const_lowpass_filter_phase)
+                    self.phase = self.lowpass_filter_phase.update_state(self.phase)
 
         return self.phase
 
@@ -111,7 +142,7 @@ class OnlinePhaseEstimatorViaProjection:
         else:
             velocity_normalized = self.vel_projected / self.amplitude_vel_n
 
-        self.phase = math.atan2(-velocity_normalized, position_normalized)
+        self.phase = self.wrap_fun(math.atan2(-velocity_normalized, position_normalized))
 
 
 def project_onto(input_, vec_onto):
