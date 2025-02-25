@@ -68,9 +68,9 @@ class L3(Kuramoto):
         return action
 
     def get_state(self, estimated_phases, n_participants):  # Returns the state of the MDP for the virtual agent
-        delta_theta = estimated_phases.reshape(self.N, 1) - estimated_phases.reshape(1, self.N)  # Matrix of all the phase differences
+        delta_theta = estimated_phases.reshape(n_participants, 1) - estimated_phases.reshape(1, n_participants)  # Matrix of all the phase differences
         # Remove 0 from phase differences matrix
-        delta_theta = delta_theta[~np.eye(delta_theta.shape[0], dtype=bool)].reshape(self.N, self.N-1)
+        delta_theta = delta_theta[~np.eye(delta_theta.shape[0], dtype=bool)].reshape(n_participants, n_participants-1)
         obs_pos = delta_theta[0, :]
         omega_a = self.omega
         order_parameter_complex = 1/(n_participants-1) * np.sum(np.exp(1j*obs_pos))

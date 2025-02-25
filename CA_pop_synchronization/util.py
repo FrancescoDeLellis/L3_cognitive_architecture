@@ -47,6 +47,12 @@ def bump_fun(x: float) -> float:
     if abs(x) >= 1:  return 0
     else:            return np.exp(1 - 1 / (1 - np.abs(x) ** 2))
 
+def l3_update_theta(theta_old, omega, coupling, dt, virtual_agent_index=0):
+    delta_theta = theta_old - theta_old[virtual_agent_index]
+    sin_delta_theta = np.sin(delta_theta)
+    theta_new = theta_old[virtual_agent_index] + dt * (omega + sum(coupling * sin_delta_theta))
+    return theta_new
+
 def kuramoto_dynamics(theta_old, num_nodes, natural_frequency, dt, coupling, adjacency_matrix, wrapping_domain):
     delta_theta = theta_old.reshape(num_nodes, 1)-theta_old.reshape(1, num_nodes)  # Matrix of all the phase differences (theta_i - theta_j)
     sin_delta_theta = np.sin(-delta_theta)  # Matrix of sines of all the phase differences. (minus because of theta_j - theta_i)

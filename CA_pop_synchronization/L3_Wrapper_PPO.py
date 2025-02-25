@@ -2,9 +2,9 @@ import socket, select, re, sys, signal, os
 import matplotlib.pyplot as plt
 import numpy as np
 from icecream import ic
-from L3_Agent_PPO import L3
+from L3_Agent_PPO import L3, Kuramoto
 from Phase_estimator_pca_online import Phase_estimator_pca_online
-from util import create_folder_if_not_exists
+from util import create_folder_if_not_exists, l3_update_theta
 from typing import Sequence # For type hinting numpy array
 
 class L3_Wrapper():
@@ -22,12 +22,18 @@ class L3_Wrapper():
         self.initial_phase = 0
         self.n_participants = n_participants
         self.omega_sat = omega_sat
+        self.c_strength = c_strength
 
         self.l3_agent = L3(0,omega_parts[0],0,n_actions=1,input_dims=(3,), omega_sat=omega_sat, model_path=model_path)
         self.l3_agent.load_model()
 
         self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operated
         self.interval_between_pca = 1  # time interval [seconds] separating consecutive computations of the PCA
+
+        self.AGENTS = []
+        self.AGENTS.append(self.l3_agent)
+        for i in range(1, self.n_participants):
+            self.AGENTS.append(Kuramoto(i, 0, 0))
 
         self.estimators_live = []
         for _ in range(self.n_participants):
@@ -70,6 +76,8 @@ class L3_Wrapper():
     def update_position(self, positions : list[list[float]], delta_t : float, time : float) -> str:
         # positions contains the neighbors 3D end effectors
         self.positions_history.append(positions.T)
+        theta = np.arctan2(self.z, self.y)
+        ic(theta)
 
         ic(time)
 
@@ -78,11 +86,10 @@ class L3_Wrapper():
             if self.AGENTS[i].is_virtual == False: 
                 phases.append(self.estimators_live[i].estimate_phase(positions[:, i], time))
             else:
-                phases.append(self.net.thetas[0] - self.initial_phase)
+                phases.append(theta - self.initial_phase)
 
         ic(phases)
 
-        self.net.dt = delta_t
         self.time_history.append(self.time_history[-1] + delta_t)
         self.phases_history.append(np.array(phases))
 
@@ -90,8 +97,10 @@ class L3_Wrapper():
         self.l3_agent.omega = self.l3_agent.choose_action_mean(observation)  # Compute the new omega for the virtual agent
         ic(self.l3_agent.omega)
 
-        self.y = self.amplitude * np.cos(self.AGENTS[0].theta)
-        self.z = self.amplitude * np.sin(self.AGENTS[0].theta)
+        l3_theta_next = l3_update_theta(np.array(phases), self.l3_agent.omega, coupling=self.c_strength, dt=delta_t)
+
+        self.y = self.amplitude * np.cos(l3_theta_next)
+        self.z = self.amplitude * np.sin(l3_theta_next)
 
         message = 'X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + self.y) + ' Z=' + str(
             self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))  # Format data as UE Vector
