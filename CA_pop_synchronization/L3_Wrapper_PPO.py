@@ -99,8 +99,8 @@ class L3_Wrapper():
 
         l3_theta_next = l3_update_theta(np.array(phases), self.l3_agent.omega, coupling=self.c_strength, dt=delta_t)
 
-        self.y = self.amplitude * np.cos(l3_theta_next)
-        self.z = self.amplitude * np.sin(l3_theta_next)
+        self.y = self.amplitude/2 * np.cos(l3_theta_next) + self.amplitude/2  # Amplitude regulation to avoid strange arm movements
+        self.z = self.amplitude/2 * np.sin(l3_theta_next) + self.amplitude/2
 
         message = 'X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + self.y) + ' Z=' + str(
             self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))  # Format data as UE Vector
