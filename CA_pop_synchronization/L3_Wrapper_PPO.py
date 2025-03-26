@@ -4,7 +4,7 @@ import numpy as np
 from icecream import ic
 from L3_Agent_PPO import L3, Kuramoto
 from Phase_estimator_pca_online import Phase_estimator_pca_online
-from util import create_folder_if_not_exists, l3_update_theta
+from util import create_folder_if_not_exists, l3_update_theta, get_time_string
 from typing import Sequence # For type hinting numpy array
 
 class L3_Wrapper():
@@ -99,8 +99,8 @@ class L3_Wrapper():
 
         l3_theta_next = l3_update_theta(np.array(phases), self.l3_agent.omega, coupling=self.c_strength, dt=delta_t)
 
-        self.y = self.amplitude/2 * np.cos(l3_theta_next) + self.amplitude/2  # Amplitude regulation to avoid strange arm movements
-        self.z = self.amplitude/2 * np.sin(l3_theta_next) + self.amplitude/2
+        self.y = self.amplitude * np.cos(l3_theta_next)
+        self.z = self.amplitude * np.sin(l3_theta_next)
 
         message = 'X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + self.y) + ' Z=' + str(
             self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))  # Format data as UE Vector
@@ -123,13 +123,16 @@ class L3_Wrapper():
         plt.legend()
         plt.grid(True)
 
-        plt.savefig(f'{self.save_path}\\phases_plot.png')
+        time_string = get_time_string()
+
+        plt.savefig(f'{self.save_path}\\'+time_string+'phases_plot.png')
         plt.close()
 
     def save_data(self):
-        np.save(f'{self.save_path}/phases_history.npy',   np.stack(self.phases_history))
-        np.save(f'{self.save_path}/postions_history.npy', np.array(self.positions_history))
-        np.save(f'{self.save_path}/time_history.npy',     np.stack(self.time_history))
+        time_string = get_time_string()
+        np.save(f'{self.save_path}/'+time_string+'phases_history.npy',   np.stack(self.phases_history))
+        np.save(f'{self.save_path}/'+time_string+'positions_history.npy', np.array(self.positions_history))
+        np.save(f'{self.save_path}/'+time_string+'time_history.npy',     np.stack(self.time_history))
 
     @staticmethod
     def start_connection(address : str, port : int) -> tuple[str, int]:

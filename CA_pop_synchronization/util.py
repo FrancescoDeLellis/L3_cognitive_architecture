@@ -2,6 +2,7 @@ import cmath
 import os
 import numpy as np
 from typing import Sequence
+from datetime import datetime
 
 
 def wrap_angle(angle_rads: float, domain: str) -> float:
@@ -71,3 +72,14 @@ def produce_spike_signal_L0(omega_L0, A_spike, interv_spike, length_spike, time_
     phase_L0_vec = np.mod(phase_L0_vec + np.pi, 2 * np.pi) - np.pi
     return phase_L0_vec
 
+def get_time_string():
+    current_time = datetime.now()
+    h = current_time.hour
+    m = current_time.minute
+    s = current_time.second
+    y = current_time.year
+    mo = current_time.month
+    d = current_time.day
+    time_string = str(y)+'_'+str(mo)+'_'+str(d)+'_h'+str(h)+'_m'+str(m)+'_s'+str(s)+'_'
+
+    return time_string
