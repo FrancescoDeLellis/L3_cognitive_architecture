@@ -67,6 +67,7 @@ if __name__ == "__main__":
             if ready_to_read:  # Wait for the connection to start reading
                 data = connection.recv(1024).decode()  # Receive data for a maximum of 1024 bytes
                 ic(f'Received data: {data}')
+            else: data = ""
 
             if data == '' or not (ready_to_read or ready_to_write or exception):
                 print('Connection with client terminated')
