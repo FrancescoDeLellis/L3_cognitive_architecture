@@ -32,11 +32,12 @@ if __name__ == "__main__":
     elif not error:
         n_participants = n_participants + 1  # participant number is inteded as the number that the L3 is connected to
         path_to_data = parameters[1]
+        exercise_ID = parameters[2] if len(parameters) > 2 else 0  # Optional exercise ID
 
     # n_participants = 3
     # path_to_data = 'simulation_data'
 
-    agent = L3_Wrapper('model', save_path=path_to_data, n_participants=n_participants)
+    agent = L3_Wrapper('model', save_path=path_to_data, n_participants=n_participants, exercise_ID=exercise_ID)
 
     # Set the server address and port (must match with socket in UE)
     SERVER_ADDRESS = 'localhost'
