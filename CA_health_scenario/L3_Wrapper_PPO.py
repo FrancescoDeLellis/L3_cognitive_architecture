@@ -3,23 +3,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 from icecream import ic
 from L3_Agent_PPO import L3, Kuramoto
-from Phase_estimator_pca_online import Phase_estimator_pca_online
+from RecursiveOnlinePhaseEstimator import RecursiveOnlinePhaseEstimator
 from util import create_folder_if_not_exists, l3_update_theta, get_time_string
 from typing import Sequence # For type hinting numpy array
 
 class L3_Wrapper():
 
-    def __init__(self, model_path : str, save_path : str, exercise_ID: int = 0, ID : int =0, amplitude : float =15, omega : float =2, n_participants : int =3,
+    def __init__(self, model_path : str, save_path : str, exercise_ID: int = 0, ID : int =0, n_dims_estimand_pos : int = 2, listening_time : float = 10.0,  amplitude : float =15, omega : float =2, n_participants : int =3,
                  omega_parts=np.array([0, 3.4, 4.6]), c_strength : float =0.25, omega_sat : float = 15):
         self.ID = ID  # Python CA instance ID
         self.exercise_ID = exercise_ID # Exercise ID for the trial
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega  # Movement frequency
-        self.x = 0
-        self.y = 0
+        self.n_dims_estimand_pos = n_dims_estimand_pos  # Number of dimensions of the position estimand
+        self.listening_time = listening_time  # Time to listen for the phase estimators
+        self.y = 0 # TODO: this will become the output of the phase indexer. Maybe you don't need it 
         self.z = 0
         self.z_amp_ratio = 0.1
-        self.initial_position = 0
+        self.initial_position = 0 # TODO: don't need this
         self.initial_phase = 0
         self.n_participants = n_participants
         self.omega_sat = omega_sat
@@ -27,9 +28,7 @@ class L3_Wrapper():
 
         self.l3_agent = L3(0,omega_parts[0],0,n_actions=1,input_dims=(3,), omega_sat=omega_sat, model_path=model_path)
         self.l3_agent.load_model()
-
-        self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operated
-        self.interval_between_pca = 1  # time interval [seconds] separating consecutive computations of the PCA
+        # TODO: Instantiate a phase indexer for the agent
 
         self.AGENTS = []
         self.AGENTS.append(self.l3_agent)
@@ -38,8 +37,8 @@ class L3_Wrapper():
 
         self.estimators_live = []
         for _ in range(self.n_participants):
-            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca,
-                                                                   self.interval_between_pca))  # One estimator for each participant
+            self.estimators_live.append(RecursiveOnlinePhaseEstimator(self.n_dims_estimand_pos,
+                                                                      self.listening_time))
 
         self.time_history = [0]
         self.phases_history = [np.zeros(self.n_participants)]
@@ -55,7 +54,8 @@ class L3_Wrapper():
         # RESET THE PHASE ESTIMATORS
         self.estimators_live = []
         for _ in range(self.n_participants):
-            self.estimators_live.append(Phase_estimator_pca_online(self.window_pca, self.interval_between_pca))
+             self.estimators_live.append(RecursiveOnlinePhaseEstimator(self.n_dims_estimand_pos,
+                                                                      self.listening_time))
 
         self.phases_history = [np.zeros(self.n_participants)]
         self.time_history = [0]
@@ -63,12 +63,14 @@ class L3_Wrapper():
 
      # This function extracts the 3D data position coming from UE
     def parse_TCP_string(self, string : str) -> tuple[bool, Sequence[float]]:
+        # TODO: Check how unreal engine sends the data and change the regex accordingly
         ic(string)
         numbers = np.array([float(num) for num in re.findall(r'-?\d+\.?\d*', string)])
-        flag = len(numbers) == 3 * self.n_participants + 1
+        flag = len(numbers) == 3 * self.n_participants + 1 # TODO: change to number_of_coordinates * n_participants + 1
         return flag, numbers[0:-1], numbers[-1]
 
     def set_initial_position(self, position : list[list[float]]):
+        # TODO: Use the phase indexer to set the initial position
         self.initial_position = position[:, 0] # 0 because it is always the index of L3
         self.initial_phase = 0
         self.positions_history.append(position.T)
@@ -77,7 +79,7 @@ class L3_Wrapper():
     def update_position(self, positions : list[list[float]], delta_t : float, time : float) -> str:
         # positions contains the neighbors 3D end effectors
         self.positions_history.append(positions.T)
-        theta = np.arctan2(self.z, self.y)
+        theta = np.arctan2(self.z, self.y) # TODO: remove this recomputation and use the L3_current_phase as an attribute that is stored
         ic(theta)
 
         ic(time)
@@ -85,7 +87,7 @@ class L3_Wrapper():
         phases = [] # Vector of the real phases
         for i in range(self.n_participants):  # Collect phases of all participants. The ones from other participants are estimated
             if self.AGENTS[i].is_virtual == False: 
-                phases.append(self.estimators_live[i].estimate_phase(positions[:, i], time))
+                phases.append(self.estimators_live[i].update_estimator(positions[:, i], time))
             else:
                 phases.append(theta - self.initial_phase)
 
@@ -100,11 +102,11 @@ class L3_Wrapper():
 
         l3_theta_next = l3_update_theta(np.array(phases), self.l3_agent.omega, coupling=self.c_strength, dt=delta_t)
 
-        self.y = self.amplitude * np.cos(l3_theta_next)
+        self.y = self.amplitude * np.cos(l3_theta_next) # TODO: Use phase indexer to compute the new positions
         self.z = self.amplitude * np.sin(l3_theta_next)
 
         message = 'X=' + str(self.initial_position[0]) + ' Y=' + str(self.initial_position[1] + self.y) + ' Z=' + str(
-            self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))  # Format data as UE Vector
+            self.initial_position[2] + self.z_amp_ratio * np.abs(self.z))  # Format data as UE Vector TODO: Change to the format that UE expects
 
         return message
     

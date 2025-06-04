@@ -1,9 +1,10 @@
 import socket, select, re, sys, signal, os   # TODO check if some imports are unnecessary
 import numpy as np
 from icecream import ic
-#from L3_Wrapper import L3_Wrapper
+import pandas as pd
 from L3_Wrapper_PPO import L3_Wrapper
 
+# TODO: Instantiate the DataFrame and load it with the correct baseline data of the selected exercise
 
 ic.configureOutput(prefix='DEBUG | ')
 # ic.disable()                              # Uncomment to stop debugging messages
