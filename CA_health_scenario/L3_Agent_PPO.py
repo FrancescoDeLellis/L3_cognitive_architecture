@@ -78,3 +78,36 @@ class L3(Kuramoto):
         var_obs_pos = 1 - np.abs(order_parameter_complex)
 
         return np.array((mean_obs_pos, var_obs_pos, omega_a))
+
+class Network:
+    def __init__(self, A, agents, dt = 0.01, c = 1.25):
+        self.A = A  # Adjacency matrix
+        self.agents = agents  # List of Agents (both Kuramoto and L3)
+        self.dt = dt  # timestep for simulations
+        self.N = len(self.agents)  # number of agents
+        self.c = c  # coupling coefficient
+        self.virtual_agents = []
+        self.virtual_agents_indices = []
+        self.human_agents = []
+        self.omegas = np.zeros(self.N)  # Vector of all omegas
+        self.thetas = np.zeros(self.N)  # Vector of all thetas
+        self.thetas_dot = np.zeros(self.N)  # Vector of all theta_dots
+        for node in self.agents:
+            self.omegas[self.agents.index(node)] = node.omega
+            self.thetas[self.agents.index(node)] = node.theta
+            if node.is_virtual:
+                self.virtual_agents.append(node)  # create a list of the virtual agents in the network
+                self.virtual_agents_indices.append(self.agents.index(node))  # create a list of the indices of the virtual agents in the network
+            else:
+                self.human_agents.append(node)  # create a list of the human agents in the network
+        self.N_virtual = len(self.virtual_agents)  # Number of virtual agents
+        self.N_human = self.N - self.N_virtual  # Number of non-virtual agents
+
+    def step(self):
+        delta_theta = self.thetas.reshape(self.N, 1)-self.thetas.reshape(1, self.N)  # Matrix of all the phase differences
+        sin_delta_theta = np.sin(-delta_theta)  # Matrix of sines of all the phase differences
+        self.thetas_dot = self.omegas + self.c * np.sum(self.A * sin_delta_theta, 1)
+        self.thetas += self.thetas_dot * self.dt
+        self.thetas = np.arctan2(np.sin(self.thetas), np.cos(self.thetas))  # wrap angles between -pi and pi
+        for i in range(self.N):
+            self.agents[i].theta = self.thetas[i]  # Update the state variables of the agents
