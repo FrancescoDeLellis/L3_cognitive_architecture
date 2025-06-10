@@ -1,10 +1,11 @@
 import socket, select, re, sys, signal, os   # TODO check if some imports are unnecessary
 import numpy as np
 from icecream import ic
-import pandas as pd
+
 from L3_Wrapper_PPO import L3_Wrapper
 
 # TODO: Instantiate the DataFrame and load it with the correct baseline data of the selected exercise
+
 
 ic.configureOutput(prefix='DEBUG | ')
 # ic.disable()                              # Uncomment to stop debugging messages
@@ -34,6 +35,7 @@ if __name__ == "__main__":
         n_participants = n_participants + 1  # participant number is inteded as the number that the L3 is connected to
         path_to_data = parameters[1]
         exercise_ID = parameters[2] if len(parameters) > 2 else 0  # Optional exercise ID
+
 
     # n_participants = 3
     # path_to_data = 'simulation_data'

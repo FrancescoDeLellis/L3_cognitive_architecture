@@ -124,10 +124,12 @@ class RecursiveOnlinePhaseEstimator:
         # Update estimator according to active mode
         match self.active_mode:
             case "sleeping":
+                print("Estimator is sleeping, waiting for discarded time to end...")
                 return None
 
             case "listening":
                 self.update_pos_vel(curr_pos)
+                print("Estimator is listening, waiting for the first loop to be estimated...")
                 return None
 
             case "estimating":
