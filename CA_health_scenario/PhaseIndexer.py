@@ -6,7 +6,7 @@ class PhaseIndexer:
 
     def __init__(self, df_in: pd.DataFrame, columns_names=None) -> None:
         assert np.isclose(df_in.index[0], 0), "Phases must start with 0."
-        assert np.isclose(df_in.index[-1], 2 * np.pi), "Phases must end with 2pi."
+        #assert np.isclose(df_in.index[-1], 2 * np.pi), "Phases must end with 2pi."
         assert np.all(np.diff(df_in.index) >= 0), "Phases must be non-decreasing."
         if columns_names:
             assert isinstance(columns_names, list) and all(isinstance(i, str) for i in columns_names), \

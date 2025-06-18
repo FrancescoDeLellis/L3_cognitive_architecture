@@ -4,7 +4,6 @@ from icecream import ic
 
 from L3_Wrapper_PPO import L3_Wrapper
 
-# TODO: Instantiate the DataFrame and load it with the correct baseline data of the selected exercise
 
 
 ic.configureOutput(prefix='DEBUG | ')
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     elif not error:
         n_participants = n_participants + 1  # participant number is inteded as the number that the L3 is connected to
         path_to_data = parameters[1]
-        exercise_ID = parameters[2] if len(parameters) > 2 else 0  # Optional exercise ID
+        exercise_ID = int(parameters[2]) if len(parameters) > 2 else 0  # Optional exercise ID
 
 
     # n_participants = 3
@@ -85,8 +84,6 @@ if __name__ == "__main__":
 
             else:
                 _, position, delta_t = agent.parse_TCP_string(data)  # Extract data coming from Unreal Engine
-                
-                position = np.reshape(position, (agent.n_participants, 3)).T
 
                 if time == 0: agent.set_initial_position(position)
 

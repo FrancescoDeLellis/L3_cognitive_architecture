@@ -5,6 +5,7 @@ import torch as T
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import normal
+from wrap_functions import wrap_to_pi
 
 class ActorNetwork(nn.Module):
     def __init__(self, input_dims, n_actions, alpha=0.0003, fc1_dims=64, fc2_dims=64, chkpt_dir='Checkpoints/'): # 256 256 Tanh
@@ -108,6 +109,7 @@ class Network:
         sin_delta_theta = np.sin(-delta_theta)  # Matrix of sines of all the phase differences
         self.thetas_dot = self.omegas + self.c * np.sum(self.A * sin_delta_theta, 1)
         self.thetas += self.thetas_dot * self.dt
-        self.thetas = np.arctan2(np.sin(self.thetas), np.cos(self.thetas))  # wrap angles between -pi and pi
+        self.thetas = wrap_to_pi(self.thetas)
+        # self.thetas = np.arctan2(np.sin(self.thetas), np.cos(self.thetas))  # wrap angles between -pi and pi
         for i in range(self.N):
             self.agents[i].theta = self.thetas[i]  # Update the state variables of the agents
