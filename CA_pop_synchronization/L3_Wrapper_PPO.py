@@ -10,7 +10,7 @@ from typing import Sequence # For type hinting numpy array
 class L3_Wrapper():
 
     def __init__(self, model_path : str, save_path : str, ID : int =0, amplitude : float =15, omega : float =2, n_participants : int =3,
-                 omega_parts=np.array([0, 3.4, 4.6]), c_strength : float =0.25, omega_sat : float = 15):
+                 omega_parts=np.array([0, 3.4, 3.4]), c_strength : float =0.25, omega_sat : float = 15):
         self.ID = ID  # Python CA instance ID
         self.amplitude = amplitude  # Movement amplitude
         self.omega = omega  # Movement frequency

@@ -8,10 +8,10 @@ from torch.distributions import normal
 from wrap_functions import wrap_to_pi
 
 class ActorNetwork(nn.Module):
-    def __init__(self, input_dims, n_actions, alpha=0.0003, fc1_dims=64, fc2_dims=64, chkpt_dir='Checkpoints/'): # 256 256 Tanh
+    def __init__(self, input_dims, n_actions, alpha=0.0003, fc1_dims=128, fc2_dims=128, chkpt_dir='Checkpoints/'): # 256 256 Tanh
         super(ActorNetwork, self).__init__()
 
-        self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
+        self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo_theta_dots')
         self.actor = nn.Sequential(
             nn.Linear(*input_dims, fc1_dims),
             nn.Tanh(),
@@ -79,6 +79,25 @@ class L3(Kuramoto):
         var_obs_pos = 1 - np.abs(order_parameter_complex)
 
         return np.array((mean_obs_pos, var_obs_pos, omega_a))
+    
+    def get_state_with_theta_dots(self, estimated_phases, estimated_theta_dots, n_participants):  # It behaves as get_state and includes also mean and variance of theta_dots
+        delta_theta = estimated_phases.reshape(n_participants, 1) - estimated_phases.reshape(1,n_participants)  # Matrix of all the phase differences
+        # Remove 0 from phase differences matrix
+        delta_theta = delta_theta[~np.eye(delta_theta.shape[0], dtype=bool)].reshape(n_participants, n_participants - 1)
+        obs_pos = delta_theta[0, :]
+        omega_a = self.omega
+        order_parameter_complex = 1 / (n_participants-1) * np.sum(np.exp(1j * obs_pos))
+        r_bar = np.abs(order_parameter_complex)
+        mean_obs_pos = cmath.phase(order_parameter_complex)
+        var_obs_pos = 1 - r_bar
+
+        mask = np.ones(estimated_theta_dots.shape[0], dtype=bool)
+        mask[0] = False  # Mask theta_dot of the virtual agents
+        mean_theta_dot = np.mean(estimated_theta_dots[~mask] - estimated_theta_dots[mask])
+        var_theta_dot = np.var(estimated_theta_dots[~mask] - estimated_theta_dots[mask])
+
+        return np.array((mean_obs_pos, var_obs_pos, mean_theta_dot, var_theta_dot, omega_a))
+
 
 class Network:
     def __init__(self, A, agents, dt = 0.01, c = 1.25):
@@ -109,7 +128,7 @@ class Network:
         sin_delta_theta = np.sin(-delta_theta)  # Matrix of sines of all the phase differences
         self.thetas_dot = self.omegas + self.c * np.sum(self.A * sin_delta_theta, 1)
         self.thetas += self.thetas_dot * self.dt
-        self.thetas = wrap_to_pi(self.thetas)
-        # self.thetas = np.arctan2(np.sin(self.thetas), np.cos(self.thetas))  # wrap angles between -pi and pi
+        #self.thetas = np.arctan2(np.sin(self.thetas), np.cos(self.thetas))  # wrap angles between -pi and pi
         for i in range(self.N):
+            self.thetas[i] = wrap_to_pi(self.thetas[i])
             self.agents[i].theta = self.thetas[i]  # Update the state variables of the agents
