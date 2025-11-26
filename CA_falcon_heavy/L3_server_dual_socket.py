@@ -14,7 +14,6 @@ ic.configureOutput(prefix='DEBUG | ')
 # ic.disable()                              # Uncomment to get useful debugging messages
 
 class L3_Wrapper():
-
     def __init__(self, acc = False, ID = 0, parts = 3):
         self.ID = ID   # Python CA instance ID             
 
@@ -45,18 +44,36 @@ class L3_Wrapper():
         self.sync_indices.append(self.ca_falcon.compute_sync_indices(current_state=positions, current_time=time))
         message = ';'.join([str(item) for item in self.sync_indices[-1]]) # 'global_sync;invidual_sync_1;invidual_sync_2: .....;invidual_sync_n_participants'
         return message
-    
 
 if __name__ == "__main__":
-    agent = L3_Wrapper()
+    agent = L3_Wrapper(parts=2)
 
     # IP and port for incoming connections
     incoming_ip = '0.0.0.0'  # Listen on all available interfaces
     incoming_port = 12345
 
     # IP and port for outgoing connections
-    outgoing_ip = '192.168.1.2'  # Replace with the actual destination IP
+    outgoing_ip = 'localhost'  # Replace with the actual destination IP
     outgoing_port = 54321
+
+
+    print("Arguments:", sys.argv)
+
+    if len(sys.argv) > 1:
+        inport = sys.argv[1]
+        print("In Port =", inport)
+        incoming_port = int(inport)
+    
+    if len(sys.argv) > 2:
+        outport = sys.argv[2]
+        print("Out Port =", outport)
+        outgoing_port = int(outport)
+        
+    if len(sys.argv) > 3:
+        outgoing_ip = sys.argv[3]
+        print("Out IP =", outgoing_ip)
+
+
 
     # setup the input data stream
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -99,9 +116,9 @@ if __name__ == "__main__":
     # Receive data stream and reply
     while True:    
         try:
-            ic(f'waiting for data')
+            # ic(f'waiting for data')
             ready_to_read, _, _ = select.select([incoming_conn], [], [])
-            if ready_to_read: 
+            if ready_to_read:
                 data = incoming_conn.recv(1024).decode()
                 _, position, delta_t = agent.parse_TCP_string(data)
                 ic(f'Received data: {data}')
@@ -111,8 +128,9 @@ if __name__ == "__main__":
             message = agent.update_synch_indexes(position, time)
 
             _, ready_to_write, _ = select.select([], [outgoing_conn], [])
-            if ready_to_write: outgoing_conn.send(message.encode('utf-8'))
-            ic(f'Message sent: {message}')
+            if ready_to_write:
+                outgoing_conn.send(message.encode('utf-8'))
+                ic(f'Message sent: {message}')
         except KeyboardInterrupt:
             # Handle the Control + C key press gracefully
             signal_handler(None, None)

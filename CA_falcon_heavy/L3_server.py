@@ -6,7 +6,7 @@ import sys
 import signal
 from icecream import ic
 
-sys.path.append('CA_falcon_heavy\L3_Engine')
+sys.path.append('L3_Engine')
 from CA_falcon_heavy import CA_falcon_heavy
 from fun_sync_indices import *
 
