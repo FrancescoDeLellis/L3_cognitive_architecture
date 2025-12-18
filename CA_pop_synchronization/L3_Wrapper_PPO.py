@@ -24,7 +24,7 @@ class L3_Wrapper():
         self.omega_sat = omega_sat
         self.c_strength = c_strength
 
-        self.l3_agent = L3(0,omega_parts[0],0,n_actions=1,input_dims=(3,), omega_sat=omega_sat, model_path=model_path)
+        self.l3_agent = L3(0,omega_parts[0],0,n_actions=1,input_dims=(5,), omega_sat=omega_sat, model_path=model_path)
         self.l3_agent.load_model()
 
         self.window_pca = 4  # duration of the time window [seconds] in which the PCA is operated
@@ -93,7 +93,8 @@ class L3_Wrapper():
         self.time_history.append(self.time_history[-1] + delta_t)
         self.phases_history.append(np.array(phases))
 
-        observation = self.l3_agent.get_state(np.array(phases), self.n_participants)
+        phases_dots = (self.phases_history[-1] - self.phases_history[-2])/delta_t  # Compute the phase dots
+        observation = self.l3_agent.get_state_with_theta_dots(np.array(phases), phases_dots, self.n_participants)
         self.l3_agent.omega = self.l3_agent.choose_action_mean(observation)  # Compute the new omega for the virtual agent
         ic(self.l3_agent.omega)
 
